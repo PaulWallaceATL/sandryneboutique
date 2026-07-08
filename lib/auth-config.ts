@@ -1,10 +1,12 @@
 /**
  * Auth bypass for demos and local development.
- * Set AUTH_BYPASS=true to skip login gates and use the service role for admin data access.
- * Remove or set to false before production launch.
+ * Demo mode is ON by default so the storefront/admin are usable without login.
+ * To enable REAL authentication, set AUTH_BYPASS=false (the only value that
+ * disables the bypass). Any other value — or no value — keeps demo mode on.
  */
 export function isAuthBypassEnabled(): boolean {
-  return process.env.AUTH_BYPASS === "true";
+  const raw = process.env.AUTH_BYPASS?.trim().toLowerCase();
+  return raw !== "false" && raw !== "0" && raw !== "no" && raw !== "off";
 }
 
 /** Stable UUID for the synthetic demo admin session. */

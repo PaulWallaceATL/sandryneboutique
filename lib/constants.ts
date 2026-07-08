@@ -46,12 +46,6 @@ export const CATEGORIES: CategoryDef[] = [
     description: "Effortless silhouettes for every hour of the day.",
   },
   {
-    slug: "accessories-jewelry",
-    label: "Accessories & Jewelry",
-    dbCategory: "accessories-jewelry",
-    description: "The finishing touches — curated pieces that elevate.",
-  },
-  {
     slug: "tops",
     label: "Tops",
     dbCategory: "tops",
@@ -62,6 +56,12 @@ export const CATEGORIES: CategoryDef[] = [
     label: "Active Wear",
     dbCategory: "active-wear",
     description: "Movement, elevated. Performance meets polish.",
+  },
+  {
+    slug: "accessories-jewelry",
+    label: "Accessories & Jewelry",
+    dbCategory: "accessories-jewelry",
+    description: "The finishing touches — curated pieces that elevate.",
   },
   {
     slug: "sale",
