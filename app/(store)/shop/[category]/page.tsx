@@ -4,6 +4,8 @@ import { Suspense } from "react";
 import BlurHighlight from "@/components/react-bits/blur-highlight";
 import { FilterBar } from "@/components/product/filter-bar";
 import { ProductCard } from "@/components/product/product-card";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd, collectionPageJsonLd } from "@/lib/seo/jsonld";
 import { CATEGORIES, getCategory } from "@/lib/constants";
 import { getProducts, type ProductSort } from "@/lib/data/products";
 import { effectivePrice } from "@/lib/types";
@@ -20,8 +22,34 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
   const { category } = await params;
   const def = getCategory(category);
-  if (!def) return { title: "Shop" };
-  return { title: def.label, description: def.description };
+  if (!def) return { title: "Shop", robots: { index: false } };
+
+  const title = def.dbCategory
+    ? `Women's ${def.label} — Curated Luxury`
+    : `${def.label} — Curated Women's Fashion`;
+  const description = `${def.description} Shop ${def.label.toLowerCase()} at Sandryne Boutique — curated luxury women's fashion with free shipping over $200.`;
+
+  return {
+    title,
+    description,
+    keywords: [
+      `women's ${def.label.toLowerCase()}`,
+      `luxury ${def.label.toLowerCase()}`,
+      "curated fashion",
+      "Sandryne Boutique",
+    ],
+    alternates: { canonical: `/shop/${def.slug}` },
+    openGraph: {
+      title: `${def.label} | Sandryne Boutique`,
+      description,
+      url: `/shop/${def.slug}`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${def.label} | Sandryne Boutique`,
+      description,
+    },
+  };
 }
 
 function first(value: string | string[] | undefined): string | undefined {
@@ -58,6 +86,15 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
+      <JsonLd
+        data={[
+          collectionPageJsonLd(def, allInCategory),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: def.label },
+          ]),
+        ]}
+      />
       <header className="mb-10 sm:mb-14 max-w-2xl">
         <p className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-4">
           Sandryne Boutique

@@ -25,6 +25,19 @@ export interface Product {
   created_at: string;
 }
 
+export interface Post {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image: string | null;
+  published: boolean;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type OrderStatus = "pending" | "paid" | "shipped" | "cancelled";
 
 export interface OrderItem {

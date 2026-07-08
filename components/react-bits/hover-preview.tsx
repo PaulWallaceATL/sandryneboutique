@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import {
   motion,
   AnimatePresence,
@@ -324,7 +325,7 @@ const HoverPreview = ({
               transition={{ duration: 0.2, ease: "easeInOut" }}
               className="absolute top-0 left-0 w-full h-full"
             >
-              <img
+              <NextImage
                 src={targets[hoveredIndex].imageUrl}
                 alt={
                   targets[hoveredIndex].altText || targets[hoveredIndex].text

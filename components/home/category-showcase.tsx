@@ -33,9 +33,9 @@ export function CategoryShowcase() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
       <div className="mb-12 sm:mb-16 max-w-3xl">
-        <p className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-5">
+        <h2 className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-5">
           Shop by Category
-        </p>
+        </h2>
         <HoverPreview
           content="Tailored {0}, fluid {1}, and crisp {2} — every piece chosen to live together, effortlessly."
           targets={CATEGORY_TILES.map((tile) => ({
@@ -75,9 +75,9 @@ export function CategoryShowcase() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
               </div>
               <div className="absolute bottom-0 inset-x-0 p-6 flex items-end justify-between">
-                <span className="font-serif text-2xl sm:text-3xl text-white tracking-wide">
+                <h3 className="font-serif text-2xl sm:text-3xl text-white tracking-wide">
                   {tile.label}
-                </span>
+                </h3>
                 <span className="text-[10px] tracking-[0.22em] uppercase text-white/80 group-hover:text-white transition-colors">
                   Shop now
                 </span>

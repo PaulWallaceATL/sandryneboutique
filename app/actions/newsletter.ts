@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { NEW_CUSTOMER_CODE } from "@/lib/discounts";
 
 export interface NewsletterResult {
   ok: boolean;
@@ -24,13 +25,19 @@ export async function subscribeToNewsletter(
     if (error) {
       // 23505 = unique_violation: already subscribed
       if (error.code === "23505") {
-        return { ok: true, message: "You're already on the list." };
+        return {
+          ok: true,
+          message: `You're already on the list — use code ${NEW_CUSTOMER_CODE} for 10% off your first order.`,
+        };
       }
       console.error("Newsletter subscription failed:", error);
       return { ok: false, message: "Something went wrong. Please try again." };
     }
 
-    return { ok: true, message: "Welcome to the story. Check your inbox soon." };
+    return {
+      ok: true,
+      message: `Welcome to the story. Use code ${NEW_CUSTOMER_CODE} at checkout for 10% off your first order.`,
+    };
   } catch (err) {
     console.error("Newsletter subscription failed:", err);
     return { ok: false, message: "Something went wrong. Please try again." };

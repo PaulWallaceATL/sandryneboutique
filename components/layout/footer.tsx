@@ -16,7 +16,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5 flex flex-col gap-5">
-            <span className="font-serif text-2xl tracking-[0.28em] uppercase">Sandryne</span>
+            <p className="font-serif text-2xl tracking-[0.28em] uppercase">Sandryne</p>
             <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
               Style is more than what you wear — it&apos;s a story you live in. We curate
               elegance: timeless silhouettes, modern minimalism, effortless style.
@@ -43,7 +43,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="lg:col-span-2">
+          <nav aria-label="Shop categories" className="lg:col-span-2">
             <h3 className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground mb-4">
               Shop
             </h3>
@@ -58,10 +58,15 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link href="/blog" className="text-sm hover:opacity-60 transition-opacity">
+                  Journal
+                </Link>
+              </li>
             </ul>
-          </div>
+          </nav>
 
-          <div className="lg:col-span-2">
+          <nav aria-label="Customer care" className="lg:col-span-2">
             <h3 className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground mb-4">
               Care
             </h3>
@@ -74,14 +79,15 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-          </div>
+          </nav>
 
           <div className="lg:col-span-3">
             <h3 className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground mb-4">
-              Be first to wear the story
+              Get 10% off your first order
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              New arrivals, editorial picks, and private offers — straight to your inbox.
+              Join the list for new arrivals, editorial picks, and private offers —
+              and unlock 10% off your first order.
             </p>
             <NewsletterForm />
           </div>

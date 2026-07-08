@@ -10,6 +10,8 @@ import {
 import { ProductGallery } from "@/components/product/product-gallery";
 import { PurchasePanel } from "@/components/product/purchase-panel";
 import { ProductCard } from "@/components/product/product-card";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo/jsonld";
 import { getProductBySlug, getProducts } from "@/lib/data/products";
 import { getCategory, CATEGORIES } from "@/lib/constants";
 import { effectivePrice, formatPrice } from "@/lib/types";
@@ -22,14 +24,44 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product) return { title: "Product not found" };
+  if (!product) return { title: "Product not found", robots: { index: false } };
+
+  const categoryDef =
+    CATEGORIES.find((c) => c.dbCategory === product.category) ??
+    getCategory(product.category);
+  const price = effectivePrice(product);
+  const title = categoryDef
+    ? `${product.name} — ${categoryDef.label}`
+    : product.name;
+  const description = `${product.description} Shop the ${product.name} for ${formatPrice(
+    price
+  )} at Sandryne Boutique — free shipping over $200 and easy returns.`;
+
   return {
-    title: product.name,
-    description: product.description,
+    title,
+    description,
+    keywords: [
+      product.name,
+      ...(categoryDef ? [categoryDef.label.toLowerCase()] : []),
+      ...product.colors.map((c) => `${c.toLowerCase()} ${product.category}`),
+      "women's fashion",
+      "Sandryne Boutique",
+    ],
+    alternates: { canonical: `/products/${product.slug}` },
     openGraph: {
-      title: product.name,
+      title,
       description: product.description,
-      images: product.images[0] ? [{ url: product.images[0] }] : undefined,
+      url: `/products/${product.slug}`,
+      type: "website",
+      images: product.images[0]
+        ? [{ url: product.images[0], alt: product.name }]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description: product.description,
+      images: product.images[0] ? [product.images[0]] : undefined,
     },
   };
 }
@@ -49,8 +81,22 @@ export default async function ProductPage({ params }: PageProps) {
 
   const price = effectivePrice(product);
 
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    ...(categoryDef
+      ? [{ name: categoryDef.label, path: `/shop/${categoryDef.slug}` }]
+      : []),
+    { name: product.name },
+  ];
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-16">
+      <JsonLd
+        data={[
+          productJsonLd(product, categoryDef?.label),
+          breadcrumbJsonLd(breadcrumbs),
+        ]}
+      />
       <nav aria-label="Breadcrumb" className="mb-8 text-[11px] tracking-[0.16em] uppercase text-muted-foreground">
         <ol className="flex items-center gap-2">
           <li>

@@ -19,7 +19,7 @@ export function ProductCard({ product, priority = false, className }: ProductCar
   const soldOut = product.inventory_count <= 0;
 
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
@@ -85,6 +85,6 @@ export function ProductCard({ product, priority = false, className }: ProductCar
           </div>
         </div>
       </Link>
-    </motion.div>
+    </motion.article>
   );
 }

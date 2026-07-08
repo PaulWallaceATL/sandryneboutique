@@ -11,7 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { TrustBadges } from "@/components/product/trust-badges";
 import { FLAT_SHIPPING_RATE, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
+import { discountAmount, findDiscount } from "@/lib/discounts";
 import { cartLineKey, cartSubtotal, useCart } from "@/lib/store/cart";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import type { ShippingAddress } from "@/lib/types";
@@ -62,20 +64,41 @@ export function CheckoutForm({ publicKey }: { publicKey: string | null }) {
   const [shipping, setShipping] = useState<ShippingAddress>(EMPTY_SHIPPING);
   const [processing, setProcessing] = useState(false);
   const [scriptReady, setScriptReady] = useState(false);
+  const [discountInput, setDiscountInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const formMounted = useRef(false);
 
   // Refs so the token-success handler (bound once) always sees current values.
   const shippingRef = useRef(shipping);
   const itemsRef = useRef(items);
+  const appliedCodeRef = useRef(appliedCode);
   useEffect(() => {
     shippingRef.current = shipping;
     itemsRef.current = items;
-  }, [shipping, items]);
+    appliedCodeRef.current = appliedCode;
+  }, [shipping, items, appliedCode]);
 
+  const appliedDiscount = findDiscount(appliedCode);
   const subtotal = cartSubtotal(items);
+  const discount = appliedDiscount ? discountAmount(subtotal, appliedDiscount) : 0;
+  const discountedSubtotal = Math.max(0, subtotal - discount);
   const shippingCost =
-    subtotal === 0 ? 0 : subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_RATE;
-  const total = subtotal + shippingCost;
+    subtotal === 0
+      ? 0
+      : discountedSubtotal >= FREE_SHIPPING_THRESHOLD
+        ? 0
+        : FLAT_SHIPPING_RATE;
+  const total = discountedSubtotal + shippingCost;
+
+  const applyDiscount = () => {
+    const def = findDiscount(discountInput);
+    if (!def) {
+      toast.error("That discount code isn't valid.");
+      return;
+    }
+    setAppliedCode(def.code);
+    toast.success(`${def.code} applied — ${def.description}.`);
+  };
 
   const submitOrder = useCallback(
     async (token: string) => {
@@ -97,6 +120,7 @@ export function CheckoutForm({ publicKey }: { publicKey: string | null }) {
             size: i.size,
             color: i.color,
           })),
+          discountCode: appliedCodeRef.current,
         });
 
         if (result.ok) {
@@ -213,6 +237,8 @@ export function CheckoutForm({ publicKey }: { publicKey: string | null }) {
               Payment
             </h2>
 
+            <TrustBadges className="mb-5" />
+
             {publicKey ? (
               <>
                 <p className="text-xs text-muted-foreground mb-4">
@@ -279,11 +305,66 @@ export function CheckoutForm({ publicKey }: { publicKey: string | null }) {
 
             <Separator className="my-5" />
 
+            {appliedDiscount ? (
+              <div className="mb-5 flex items-center justify-between border border-foreground/15 bg-secondary/50 px-3 py-2.5">
+                <span className="text-xs">
+                  <span className="font-mono font-medium">{appliedDiscount.code}</span>
+                  {" — "}
+                  {appliedDiscount.description}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppliedCode(null);
+                    setDiscountInput("");
+                  }}
+                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="mb-5 flex gap-2">
+                <Input
+                  value={discountInput}
+                  onChange={(e) => setDiscountInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      applyDiscount();
+                    }
+                  }}
+                  placeholder="Discount code"
+                  aria-label="Discount code"
+                  className="rounded-none uppercase placeholder:normal-case"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={applyDiscount}
+                  disabled={!discountInput.trim()}
+                  className="rounded-none tracking-[0.14em] uppercase text-xs"
+                >
+                  Apply
+                </Button>
+              </div>
+            )}
+
             <dl className="space-y-2.5 text-sm">
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Subtotal</dt>
                 <dd className="tabular-nums">{formatPrice(subtotal)}</dd>
               </div>
+              {discount > 0 && appliedDiscount && (
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">
+                    Discount ({appliedDiscount.code})
+                  </dt>
+                  <dd className="tabular-nums text-destructive">
+                    −{formatPrice(discount)}
+                  </dd>
+                </div>
+              )}
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">Shipping</dt>
                 <dd className="tabular-nums">

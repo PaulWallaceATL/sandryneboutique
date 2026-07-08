@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/data/products";
 import { chargeCard, heartlandConfigured } from "@/lib/heartland";
 import { FLAT_SHIPPING_RATE, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
+import { discountAmount, findDiscount } from "@/lib/discounts";
 import type { OrderItem, Product, ShippingAddress } from "@/lib/types";
 import { effectivePrice } from "@/lib/types";
 
@@ -19,6 +20,7 @@ export interface CheckoutInput {
   token: string;
   shipping: ShippingAddress;
   lines: CheckoutLine[];
+  discountCode?: string | null;
 }
 
 export type CheckoutResult =
@@ -104,8 +106,20 @@ export async function processCheckout(input: CheckoutInput): Promise<CheckoutRes
     });
   }
 
-  const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_RATE;
-  const total = Math.round((subtotal + shippingCost) * 100) / 100;
+  // Discount codes are validated server-side; an unknown code is rejected
+  // rather than silently ignored so the shopper isn't surprised at charge time.
+  let discount = 0;
+  if (input.discountCode?.trim()) {
+    const def = findDiscount(input.discountCode);
+    if (!def) {
+      return { ok: false, error: "That discount code isn't valid." };
+    }
+    discount = discountAmount(subtotal, def);
+  }
+
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const shippingCost = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING_RATE;
+  const total = Math.round((discountedSubtotal + shippingCost) * 100) / 100;
 
   // Charge the card via Heartland.
   const charge = await chargeCard({

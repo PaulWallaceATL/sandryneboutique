@@ -1,5 +1,6 @@
 "use client";
 
+import NextImage from "next/image";
 import React, {
   useRef,
   useEffect,
@@ -13,6 +14,8 @@ import { cn } from "@/lib/utils";
 export interface GradientCarouselProps {
   /** Array of image URLs to display in the carousel */
   images?: string[];
+  /** Descriptive alt text for each image, matched by index */
+  imageAlts?: string[];
   /** Additional CSS classes for the wrapper */
   className?: string;
   /** Maximum rotation angle for cards in degrees */
@@ -75,6 +78,7 @@ const GradientCarousel: React.FC<GradientCarouselProps> = ({
     "https://images.unsplash.com/photo-1644426358812-879f02d1d867?q=80&w=1828&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "https://images.unsplash.com/photo-1545431781-3e1b506e9a37?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   ],
+  imageAlts,
   className = "",
   maxRotationDegrees = 28,
   maxDepthPx = 140,
@@ -838,10 +842,12 @@ const GradientCarousel: React.FC<GradientCarouselProps> = ({
               transformOrigin: "90% center",
             }}
           >
-            <img
+            <NextImage
               src={src}
-              alt={`Carousel item ${i + 1}`}
-              className="w-full h-full object-cover rounded-4xl pointer-events-none select-none shadow-2xl border border-white/10"
+              alt={imageAlts?.[i] ?? `Carousel item ${i + 1}`}
+              fill
+              sizes="(max-width: 1385px) 26vw, 360px"
+              className="object-cover rounded-4xl pointer-events-none select-none shadow-2xl border border-white/10"
               draggable={false}
               style={{ userSelect: "none" }}
             />

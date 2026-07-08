@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { TrustBadges } from "@/components/product/trust-badges";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { formatPrice } from "@/lib/types";
 import { cartLineKey, cartSubtotal, useCart } from "@/lib/store/cart";
@@ -158,6 +159,7 @@ export function CartDrawer() {
               >
                 <Link href="/checkout">Check Out</Link>
               </Button>
+              <TrustBadges className="justify-center pt-1" />
             </div>
           </>
         )}

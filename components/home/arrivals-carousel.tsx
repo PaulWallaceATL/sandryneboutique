@@ -41,6 +41,7 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
       <div className="relative h-[440px] sm:h-[540px]">
         <GradientCarousel
           images={products.map((p) => p.images[0])}
+          imageAlts={products.map((p) => p.name)}
           onCardChange={setActiveIndex}
           cardAspectRatio={3 / 4}
           gradientIntensity={0.35}

@@ -102,7 +102,7 @@ export function Header({ menu = {} }: HeaderProps) {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center justify-center gap-8 pb-3.5">
+          <nav aria-label="Main navigation" className="hidden lg:flex items-center justify-center gap-8 pb-3.5">
             {CATEGORIES.map((cat) => {
               const href = `/shop/${cat.slug}`;
               const active = pathname === href || activeCategory === cat.slug;
@@ -128,6 +128,22 @@ export function Header({ menu = {} }: HeaderProps) {
                 </Link>
               );
             })}
+            <Link
+              href="/blog"
+              onMouseEnter={() => setActiveCategory(null)}
+              className={cn(
+                "relative text-[11px] tracking-[0.18em] uppercase transition-opacity hover:opacity-100",
+                pathname.startsWith("/blog") ? "opacity-100" : "opacity-60"
+              )}
+            >
+              Journal
+              {pathname.startsWith("/blog") && (
+                <motion.span
+                  layoutId="nav-underline"
+                  className="absolute -bottom-1 left-0 right-0 h-px bg-foreground"
+                />
+              )}
+            </Link>
           </nav>
         </div>
 
@@ -139,6 +155,8 @@ export function Header({ menu = {} }: HeaderProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+              role="navigation"
+              aria-label={`${activeDef?.label ?? "Category"} menu`}
               className="hidden lg:block absolute inset-x-0 top-full border-t border-foreground/8 bg-background/98 backdrop-blur-xl shadow-[0_18px_40px_rgba(0,0,0,0.08)]"
             >
               <div className="mx-auto max-w-7xl px-6 py-8">
@@ -209,6 +227,7 @@ export function Header({ menu = {} }: HeaderProps) {
         <AnimatePresence>
           {menuOpen && (
             <motion.nav
+              aria-label="Mobile navigation"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -235,6 +254,19 @@ export function Header({ menu = {} }: HeaderProps) {
                     </Link>
                   </motion.li>
                 ))}
+                <motion.li
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.05 * CATEGORIES.length, duration: 0.3 }}
+                >
+                  <Link
+                    href="/blog"
+                    onClick={closeMenu}
+                    className="block py-2.5 font-serif text-2xl tracking-wide"
+                  >
+                    Journal
+                  </Link>
+                </motion.li>
               </ul>
             </motion.nav>
           )}

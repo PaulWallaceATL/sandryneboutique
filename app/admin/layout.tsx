@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingBag, Store, Users } from "lucide-react";
+import { FileText, LayoutDashboard, Package, ShoppingBag, Store, Users } from "lucide-react";
 import { getSessionInfo } from "@/lib/auth";
 import { isAuthBypassEnabled } from "@/lib/auth-config";
 import { signOut } from "@/app/actions/auth";
@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/posts", label: "Posts", icon: FileText },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/customers", label: "Customers", icon: Users },
 ];

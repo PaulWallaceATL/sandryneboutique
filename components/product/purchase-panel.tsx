@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { TrustBadges } from "@/components/product/trust-badges";
 import type { Product } from "@/lib/types";
 import { effectivePrice } from "@/lib/types";
 import { useCart } from "@/lib/store/cart";
@@ -144,6 +145,8 @@ export function PurchasePanel({ product }: PurchasePanelProps) {
           Only {product.inventory_count} left in stock
         </p>
       )}
+
+      <TrustBadges className="-mt-2" />
     </div>
   );
 }

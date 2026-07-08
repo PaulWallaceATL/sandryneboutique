@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
+import BlurHighlight from "@/components/react-bits/blur-highlight";
 
 export function Hero1() {
   return (
@@ -43,8 +44,9 @@ export function Hero1() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg"
             >
-              This week&rsquo;s fresh summer picks — timeless silhouettes and
-              modern minimalism, curated for an effortless, elevated look.
+              Silk dresses, elevated essentials, and gold vermeil jewelry —
+              curated in limited runs for women who dress with intention.
+              New pieces land weekly, and the best sell out first.
             </motion.p>
 
             <motion.div
@@ -56,8 +58,21 @@ export function Hero1() {
               <motion.span whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
                 <Link
                   href="/shop/new-arrivals"
-                  className="flex items-center justify-center px-8 py-3.5 bg-foreground text-background text-[11px] tracking-[0.22em] uppercase hover:bg-foreground/85 transition-colors w-full sm:w-auto"
+                  className="relative overflow-hidden flex items-center justify-center px-8 py-3.5 bg-foreground text-background text-[11px] tracking-[0.22em] uppercase hover:bg-foreground/85 transition-colors w-full sm:w-auto"
                 >
+                  <motion.span
+                    aria-hidden
+                    initial={{ x: "-150%" }}
+                    animate={{ x: "150%" }}
+                    transition={{
+                      duration: 1.6,
+                      delay: 1.2,
+                      repeat: Infinity,
+                      repeatDelay: 6,
+                      ease: "easeInOut",
+                    }}
+                    className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-background/25 to-transparent skew-x-[-20deg]"
+                  />
                   Explore Summer Collection
                 </Link>
               </motion.span>
@@ -78,10 +93,15 @@ export function Hero1() {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="flex items-center gap-4 pt-2 sm:pt-4 select-none"
             >
-              <div className="h-px w-12 bg-foreground/30" />
-              <span className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground">
-                Be first to wear the story
-              </span>
+              <div className="h-px w-12 bg-foreground/30 shrink-0" />
+              <BlurHighlight
+                className="text-[11px] tracking-[0.18em] uppercase text-muted-foreground"
+                blurAmount={5}
+                blurDelay={0.6}
+                viewportOptions={{ once: true, amount: 0.4 }}
+              >
+                Free shipping over $200 · Secure checkout · 14-day easy returns
+              </BlurHighlight>
             </motion.div>
           </div>
 

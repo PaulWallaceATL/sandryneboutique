@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Hero1 } from "@/components/blocks/hero-1";
@@ -7,6 +8,22 @@ import { ArrivalsCarousel } from "@/components/home/arrivals-carousel";
 import { BrandSection } from "@/components/home/brand-section";
 import { ProductCard } from "@/components/product/product-card";
 import { getProducts } from "@/lib/data/products";
+
+export const metadata: Metadata = {
+  title: {
+    absolute:
+      "Sandryne Boutique — Curated Luxury Women's Fashion | Dresses, Tops & Jewelry",
+  },
+  description:
+    "Shop curated luxury women's fashion at Sandryne Boutique: silk dresses, elevated tops and bottoms, active wear, and gold vermeil jewelry. Free shipping over $200, easy returns, and 10% off your first order.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Sandryne Boutique — Curated Luxury Women's Fashion",
+    description:
+      "Timeless silhouettes and modern minimalism — dresses, tops, bottoms, active wear, accessories and jewelry, curated for an effortless, elevated look.",
+    url: "/",
+  },
+};
 
 export default async function HomePage() {
   const [newArrivals, freshPicks] = await Promise.all([
