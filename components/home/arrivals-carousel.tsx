@@ -1,20 +1,90 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight } from "lucide-react";
-import GradientCarousel from "@/components/react-bits/gradient-carousel";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Product } from "@/lib/types";
 import { effectivePrice, formatPrice } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface ArrivalsCarouselProps {
   products: Product[];
 }
 
 export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
   const active = products[activeIndex];
+
+  const updateScrollState = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft < maxScroll - 4);
+
+    const cards = el.querySelectorAll<HTMLElement>("[data-carousel-item]");
+    if (cards.length === 0) return;
+
+    const viewportCenter = el.scrollLeft + el.clientWidth / 2;
+    let closest = 0;
+    let minDistance = Infinity;
+
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const distance = Math.abs(viewportCenter - cardCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = index;
+      }
+    });
+
+    setActiveIndex(closest);
+  }, []);
+
+  const scrollToIndex = useCallback((index: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const card = el.querySelectorAll<HTMLElement>("[data-carousel-item]")[index];
+    if (!card) return;
+
+    const targetLeft =
+      card.offsetLeft - (el.clientWidth - card.offsetWidth) / 2;
+
+    el.scrollTo({
+      left: targetLeft,
+      behavior: "smooth",
+    });
+  }, []);
+
+  const scrollPrev = () => {
+    scrollToIndex(Math.max(0, activeIndex - 1));
+  };
+
+  const scrollNext = () => {
+    scrollToIndex(Math.min(products.length - 1, activeIndex + 1));
+  };
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    updateScrollState();
+
+    el.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollState);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [products.length, updateScrollState]);
 
   if (products.length === 0) return null;
 
@@ -38,41 +108,102 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
         </Link>
       </div>
 
-      <div className="relative h-[440px] sm:h-[540px]">
-        <GradientCarousel
-          images={products.map((p) => p.images[0])}
-          imageAlts={products.map((p) => p.name)}
-          onCardChange={setActiveIndex}
-          cardAspectRatio={3 / 4}
-          gradientIntensity={0.35}
-          gradientSize={0.55}
-          backgroundBlur={48}
-          className="bg-card dark:bg-card"
+      <div className="relative">
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.04),transparent_70%)]"
+          aria-hidden
         />
+
+        <button
+          type="button"
+          onClick={scrollPrev}
+          disabled={!canScrollLeft}
+          aria-label="Show previous pick"
+          className={cn(
+            "absolute left-2 sm:left-4 top-1/2 z-10 -translate-y-1/2",
+            "flex size-10 sm:size-11 items-center justify-center",
+            "border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-sm",
+            "transition-opacity hover:bg-background disabled:pointer-events-none disabled:opacity-30",
+          )}
+        >
+          <ArrowLeft className="size-4" strokeWidth={1.5} />
+        </button>
+
+        <button
+          type="button"
+          onClick={scrollNext}
+          disabled={!canScrollRight}
+          aria-label="Show next pick"
+          className={cn(
+            "absolute right-2 sm:right-4 top-1/2 z-10 -translate-y-1/2",
+            "flex size-10 sm:size-11 items-center justify-center",
+            "border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-sm",
+            "transition-opacity hover:bg-background disabled:pointer-events-none disabled:opacity-30",
+          )}
+        >
+          <ArrowRight className="size-4" strokeWidth={1.5} />
+        </button>
+
+        <div
+          ref={scrollRef}
+          className={cn(
+            "flex gap-4 sm:gap-6 overflow-x-auto overflow-y-hidden py-2",
+            "snap-x snap-mandatory scroll-smooth",
+            "overscroll-x-contain touch-pan-x",
+            "px-[calc(50%-36vw)] sm:px-[calc(50%-140px)] md:px-[calc(50%-150px)]",
+            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          )}
+        >
+          {products.map((product, index) => {
+            const isActive = index === activeIndex;
+
+            return (
+              <article
+                key={product.id}
+                data-carousel-item
+                className={cn(
+                  "snap-center shrink-0 w-[72vw] sm:w-[280px] md:w-[300px]",
+                  "transition-[transform,opacity] duration-300 ease-out",
+                  isActive ? "scale-100 opacity-100" : "scale-[0.94] opacity-65",
+                )}
+              >
+                <Link
+                  href={`/products/${product.slug}`}
+                  className="group block"
+                  tabIndex={isActive ? 0 : -1}
+                >
+                  <div className="relative aspect-3/4 overflow-hidden rounded-3xl sm:rounded-4xl bg-muted shadow-lg border border-foreground/5">
+                    {product.images[0] && (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        fill
+                        loading={index === 0 ? "eager" : "lazy"}
+                        sizes="(max-width: 640px) 72vw, 300px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    )}
+                  </div>
+                </Link>
+              </article>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 mt-8 flex justify-center">
-        <AnimatePresence mode="wait">
-          {active && (
-            <motion.div
-              key={active.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="text-center"
-            >
-              <Link href={`/products/${active.slug}`} className="group inline-block">
-                <h3 className="font-serif text-xl sm:text-2xl tracking-wide group-hover:opacity-60 transition-opacity">
-                  {active.name}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground tabular-nums">
-                  {formatPrice(effectivePrice(active))}
-                </p>
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 mt-8 min-h-[4.5rem] flex justify-center">
+        {active && (
+          <div className="text-center animate-in fade-in duration-200">
+            <Link href={`/products/${active.slug}`} className="group inline-block">
+              <h3 className="font-serif text-xl sm:text-2xl tracking-wide group-hover:opacity-60 transition-opacity">
+                {active.name}
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground tabular-nums">
+                {formatPrice(effectivePrice(active))}
+              </p>
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
