@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LayoutDashboard, Package, ShoppingBag, Store, Users } from "lucide-react";
 import { getSessionInfo } from "@/lib/auth";
+import { isAuthBypassEnabled } from "@/lib/auth-config";
 import { signOut } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 
@@ -23,13 +24,22 @@ const NAV_ITEMS = [
 export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const bypass = isAuthBypassEnabled();
   const { user, profile } = await getSessionInfo();
 
-  if (!user) redirect("/login?next=/admin");
-  if (profile?.role !== "admin") redirect("/account");
+  if (!bypass) {
+    if (!user) redirect("/login?next=/admin");
+    if (profile?.role !== "admin") redirect("/account");
+  }
 
   return (
-    <div className="flex flex-1 min-h-screen">
+    <div className={bypass ? "flex flex-1 min-h-screen pt-7" : "flex flex-1 min-h-screen"}>
+      {bypass && (
+        <div className="fixed top-0 inset-x-0 z-50 bg-amber-500 text-amber-950 text-center text-xs tracking-wide py-1.5 px-4">
+          Demo mode — auth bypassed. Set <code className="font-mono">AUTH_BYPASS=false</code> before
+          launch.
+        </div>
+      )}
       <aside className="hidden md:flex w-60 shrink-0 flex-col border-r border-foreground/8 bg-card">
         <div className="px-6 py-6 border-b border-foreground/8">
           <Link href="/admin" className="font-serif text-lg tracking-[0.24em] uppercase">

@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/server";
+import { createPrivilegedClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/data/products";
 import type { Order, Profile } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
@@ -22,7 +22,7 @@ export default async function AdminCustomersPage() {
   let orders: Order[] = [];
 
   if (supabaseConfigured()) {
-    const supabase = await createClient();
+    const supabase = await createPrivilegedClient();
     const [profileRes, orderRes] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*"),

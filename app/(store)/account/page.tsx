@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionInfo } from "@/lib/auth";
+import { isAuthBypassEnabled } from "@/lib/auth-config";
 import { signOut } from "@/app/actions/auth";
 import type { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
@@ -22,6 +23,7 @@ const STATUS_LABELS: Record<Order["status"], string> = {
 };
 
 export default async function AccountPage() {
+  const bypass = isAuthBypassEnabled();
   const { user, profile } = await getSessionInfo();
   if (!user) redirect("/login?next=/account");
 
@@ -35,6 +37,12 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
+      {bypass && (
+        <p className="mb-8 border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+          Demo mode — you are signed in as a synthetic admin user. Real accounts activate when{" "}
+          <code className="font-mono text-xs">AUTH_BYPASS</code> is disabled.
+        </p>
+      )}
       <header className="mb-12 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-3">

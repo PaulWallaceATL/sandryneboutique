@@ -7,7 +7,7 @@ import {
   type RevenuePoint,
   type StatusPoint,
 } from "@/components/admin/revenue-charts";
-import { createClient } from "@/lib/supabase/server";
+import { createPrivilegedClient } from "@/lib/supabase/server";
 import type { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
 
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 const REVENUE_STATUSES: Order["status"][] = ["paid", "shipped"];
 
 export default async function AdminDashboardPage() {
-  const supabase = await createClient();
+  const supabase = await createPrivilegedClient();
 
   const [{ data: orderRows }, { count: productCount }] = await Promise.all([
     supabase.from("orders").select("*").order("created_at", { ascending: true }),

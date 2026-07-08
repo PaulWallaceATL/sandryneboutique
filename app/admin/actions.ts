@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createPrivilegedClient } from "@/lib/supabase/server";
 import { getSessionInfo } from "@/lib/auth";
 import type { OrderStatus } from "@/lib/types";
 
@@ -72,7 +72,7 @@ export async function createProduct(input: ProductInput): Promise<ActionResult> 
   const invalid = validateProduct(input);
   if (invalid) return { ok: false, message: invalid };
 
-  const supabase = await createClient();
+  const supabase = await createPrivilegedClient();
   const { data, error } = await supabase
     .from("products")
     .insert({ ...input, sale_price: input.on_sale ? input.sale_price : null })
@@ -96,7 +96,7 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Ac
   const invalid = validateProduct(input);
   if (invalid) return { ok: false, message: invalid };
 
-  const supabase = await createClient();
+  const supabase = await createPrivilegedClient();
   const { error } = await supabase
     .from("products")
     .update({ ...input, sale_price: input.on_sale ? input.sale_price : null })
@@ -116,7 +116,7 @@ export async function deleteProduct(id: string): Promise<ActionResult> {
   const denied = await requireAdmin();
   if (denied) return denied;
 
-  const supabase = await createClient();
+  const supabase = await createPrivilegedClient();
   const { error } = await supabase.from("products").delete().eq("id", id);
 
   if (error) {
@@ -141,7 +141,7 @@ export async function updateOrderStatus(
     return { ok: false, message: "Invalid order status." };
   }
 
-  const supabase = await createClient();
+  const supabase = await createPrivilegedClient();
   const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
 
   if (error) {

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { isAuthBypassEnabled } from "@/lib/auth-config";
 import { createClient } from "@/lib/supabase/server";
 
 export interface AuthResult {
@@ -84,6 +85,9 @@ export async function signUp(_prev: AuthResult | null, formData: FormData): Prom
 }
 
 export async function signOut(): Promise<void> {
+  if (isAuthBypassEnabled()) {
+    redirect("/");
+  }
   if (!supabaseReady()) redirect("/");
   const supabase = await createClient();
   await supabase.auth.signOut();

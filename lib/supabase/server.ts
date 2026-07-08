@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { isAuthBypassEnabled } from "@/lib/auth-config";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Server client bound to the current request's auth cookies.
@@ -28,4 +30,15 @@ export async function createClient() {
       },
     }
   );
+}
+
+/**
+ * Server client with admin privileges when AUTH_BYPASS=true.
+ * Use for admin reads/writes that normally require a signed-in admin session.
+ */
+export async function createPrivilegedClient() {
+  if (isAuthBypassEnabled() && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return createAdminClient();
+  }
+  return createClient();
 }

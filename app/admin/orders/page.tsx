@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
-import { createClient } from "@/lib/supabase/server";
+import { createPrivilegedClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/data/products";
 import type { Order, OrderStatus } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
@@ -36,7 +36,7 @@ export default async function AdminOrdersPage({
 
   let orders: Order[] = [];
   if (supabaseConfigured()) {
-    const supabase = await createClient();
+    const supabase = await createPrivilegedClient();
     let query = supabase.from("orders").select("*").order("created_at", { ascending: false });
     if (activeFilter !== "all") query = query.eq("status", activeFilter);
     const { data } = await query;

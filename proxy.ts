@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAuthBypassEnabled } from "@/lib/auth-config";
 
 export async function proxy(request: NextRequest) {
+  if (isAuthBypassEnabled()) {
+    return NextResponse.next({ request });
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -46,7 +51,7 @@ export async function proxy(request: NextRequest) {
   return supabaseResponse;
 }
 
-export const config = {
+export const proxyConfig = {
   matcher: [
     // Run on everything except static assets and images.
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
