@@ -846,6 +846,8 @@ const GradientCarousel: React.FC<GradientCarouselProps> = ({
               src={src}
               alt={imageAlts?.[i] ?? `Carousel item ${i + 1}`}
               fill
+              priority={i === initialIndex}
+              loading={i === initialIndex ? undefined : "lazy"}
               sizes="(max-width: 1385px) 26vw, 360px"
               className="object-cover rounded-4xl pointer-events-none select-none shadow-2xl border border-white/10"
               draggable={false}

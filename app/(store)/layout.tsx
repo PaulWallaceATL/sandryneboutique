@@ -1,6 +1,6 @@
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { CartDrawer } from "@/components/cart/cart-drawer";
+import { CartDrawerLazy } from "@/components/cart/cart-drawer-lazy";
 import { getMegaMenuProducts } from "@/lib/data/products";
 
 export default async function StoreLayout({
@@ -13,7 +13,7 @@ export default async function StoreLayout({
       <Header menu={menu} />
       <main className="flex-1">{children}</main>
       <Footer />
-      <CartDrawer />
+      <CartDrawerLazy />
     </>
   );
 }

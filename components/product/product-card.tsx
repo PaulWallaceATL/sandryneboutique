@@ -1,8 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
 import type { Product } from "@/lib/types";
 import { effectivePrice, formatPrice } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -19,13 +16,7 @@ export function ProductCard({ product, priority = false, className }: ProductCar
   const soldOut = product.inventory_count <= 0;
 
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.55, ease: [0.25, 0.1, 0.25, 1] }}
-      className={cn("group", className)}
-    >
+    <article className={cn("group", className)}>
       <Link href={`/products/${product.slug}`} className="block">
         <div className="relative aspect-3/4 overflow-hidden bg-muted">
           {product.images[0] && (
@@ -37,7 +28,7 @@ export function ProductCard({ product, priority = false, className }: ProductCar
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className={cn(
                 "object-cover transition-all duration-700 ease-out group-hover:scale-[1.04]",
-                hasHoverImage && "group-hover:opacity-0"
+                hasHoverImage && "group-hover:opacity-0",
               )}
             />
           )}
@@ -46,6 +37,7 @@ export function ProductCard({ product, priority = false, className }: ProductCar
               src={product.images[1]}
               alt={`${product.name} — alternate view`}
               fill
+              loading="lazy"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-cover opacity-0 scale-[1.04] transition-all duration-700 ease-out group-hover:opacity-100"
             />
@@ -85,6 +77,6 @@ export function ProductCard({ product, priority = false, className }: ProductCar
           </div>
         </div>
       </Link>
-    </motion.article>
+    </article>
   );
 }

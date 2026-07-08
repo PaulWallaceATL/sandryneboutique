@@ -1,13 +1,42 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Hero1 } from "@/components/blocks/hero-1";
 import { TaglineMarquee } from "@/components/home/tagline-marquee";
 import { CategoryShowcase } from "@/components/home/category-showcase";
-import { ArrivalsCarousel } from "@/components/home/arrivals-carousel";
-import { BrandSection } from "@/components/home/brand-section";
 import { ProductCard } from "@/components/product/product-card";
+import { LazySection } from "@/components/ui/lazy-section";
 import { getProducts } from "@/lib/data/products";
+
+const ArrivalsCarousel = dynamic(
+  () =>
+    import("@/components/home/arrivals-carousel").then((m) => ({
+      default: m.ArrivalsCarousel,
+    })),
+  {
+    loading: () => (
+      <section
+        className="py-20 sm:py-28 border-y border-foreground/8 bg-card"
+        aria-hidden
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-[440px] sm:h-[540px] bg-muted/30 animate-pulse" />
+      </section>
+    ),
+  },
+);
+
+const BrandSection = dynamic(
+  () =>
+    import("@/components/home/brand-section").then((m) => ({
+      default: m.BrandSection,
+    })),
+  {
+    loading: () => (
+      <section className="bg-foreground min-h-[480px]" aria-hidden />
+    ),
+  },
+);
 
 export const metadata: Metadata = {
   title: {
@@ -36,7 +65,10 @@ export default async function HomePage() {
       <Hero1 />
       <TaglineMarquee />
       <CategoryShowcase />
-      <ArrivalsCarousel products={freshPicks} />
+
+      <LazySection minHeight="540px">
+        <ArrivalsCarousel products={freshPicks} />
+      </LazySection>
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
         <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
@@ -59,12 +91,14 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6">
           {newArrivals.map((product, i) => (
-            <ProductCard key={product.id} product={product} priority={i < 4} />
+            <ProductCard key={product.id} product={product} priority={i < 2} />
           ))}
         </div>
       </section>
 
-      <BrandSection />
+      <LazySection minHeight="480px">
+        <BrandSection />
+      </LazySection>
     </>
   );
 }

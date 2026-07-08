@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // globalpayments-api ships conditional requires that can't be statically bundled.
   serverExternalPackages: ["globalpayments-api"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "motion/react", "gsap"],
+  },
   images: {
     remotePatterns: [
       {
