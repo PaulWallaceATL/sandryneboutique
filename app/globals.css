@@ -158,18 +158,16 @@
 
 @keyframes hero-fade-up {
   from {
-    opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(12px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
 @layer utilities {
   .hero-fade-up {
-    animation: hero-fade-up 0.55s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+    animation: hero-fade-up 0.45s cubic-bezier(0.25, 0.1, 0.25, 1) both;
   }
 
   .hero-delay-1 {
@@ -188,11 +186,22 @@
     animation-delay: 0.32s;
   }
 
+  @media (max-width: 639px) {
+    .hero-fade-up {
+      animation: none;
+      transform: none;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .hero-fade-up {
       animation: none;
-      opacity: 1;
       transform: none;
     }
+  }
+
+  .below-fold-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 540px;
   }
 }

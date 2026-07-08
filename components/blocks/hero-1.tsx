@@ -17,13 +17,13 @@ export function Hero1() {
               </span>
             </div>
 
-            <h1 className="hero-fade-up hero-delay-1 font-serif text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem] tracking-tight leading-[1.02] text-foreground">
+            <h1 className="hero-fade-up font-sans sm:font-serif text-5xl sm:text-6xl lg:text-7xl xl:text-[5.5rem] tracking-tight leading-[1.02] text-foreground">
               Summer,
               <br />
               <em className="italic font-light">Elevated.</em>
             </h1>
 
-            <p className="hero-fade-up hero-delay-2 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
+            <p className="hero-fade-up text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg">
               Silk dresses, elevated essentials, and gold vermeil jewelry —
               curated in limited runs for women who dress with intention.
               New pieces land weekly, and the best sell out first.
@@ -53,26 +53,17 @@ export function Hero1() {
             </div>
           </div>
 
-          <div className="hero-fade-up hero-delay-2 relative w-full h-auto">
-            <div className="relative w-full min-h-[420px] sm:min-h-[560px] lg:min-h-[640px] bg-muted overflow-hidden">
+          <div className="hero-fade-up hero-delay-2 relative w-full h-auto hidden sm:block">
+            <div className="relative w-full min-h-[360px] sm:min-h-[560px] lg:min-h-[640px] bg-muted overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1200&auto=format&fit=crop"
-                alt="Summer, Elevated — the Sandryne Summer '26 collection"
-                fill
-                loading="lazy"
-                sizes="100vw"
-                quality={80}
-                className="object-cover lg:hidden"
-              />
-              <Image
-                src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1200&auto=format&fit=crop"
+                src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=800&auto=format&fit=crop"
                 alt="Summer, Elevated — the Sandryne Summer '26 collection"
                 fill
                 priority
                 fetchPriority="high"
-                sizes="50vw"
-                quality={80}
-                className="object-cover hidden lg:block"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                quality={75}
+                className="object-cover"
               />
 
               <div className="absolute bottom-0 right-0 flex flex-col items-end">

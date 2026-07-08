@@ -51,10 +51,6 @@ export function Header({ menu = {} }: HeaderProps) {
 
   return (
     <>
-      <div className="bg-foreground text-background text-center text-[11px] tracking-[0.2em] uppercase py-2 px-4">
-        New customers save 10% with code NEW10 — Free shipping over $200
-      </div>
-
       <header
         className={cn(
           "sticky top-0 z-40 transition-shadow duration-300 glass",
@@ -226,39 +222,26 @@ export function Header({ menu = {} }: HeaderProps) {
 
         <AnimatePresence>
           {menuOpen && (
-            <motion.nav
+            <nav
               aria-label="Mobile navigation"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
-              className="lg:hidden overflow-hidden border-t border-foreground/8"
+              className="lg:hidden border-t border-foreground/8 animate-in fade-in slide-in-from-top-1 duration-200"
             >
               <ul className="px-6 py-6 flex flex-col gap-1">
-                {CATEGORIES.map((cat, i) => (
-                  <motion.li
-                    key={cat.slug}
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 * i, duration: 0.3 }}
-                  >
+                {CATEGORIES.map((cat) => (
+                  <li key={cat.slug}>
                     <Link
                       href={`/shop/${cat.slug}`}
                       onClick={closeMenu}
                       className={cn(
                         "block py-2.5 font-serif text-2xl tracking-wide",
-                        cat.slug === "sale" && "text-destructive"
+                        cat.slug === "sale" && "text-destructive",
                       )}
                     >
                       {cat.label}
                     </Link>
-                  </motion.li>
+                  </li>
                 ))}
-                <motion.li
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.05 * CATEGORIES.length, duration: 0.3 }}
-                >
+                <li>
                   <Link
                     href="/blog"
                     onClick={closeMenu}
@@ -266,9 +249,9 @@ export function Header({ menu = {} }: HeaderProps) {
                   >
                     Journal
                   </Link>
-                </motion.li>
+                </li>
               </ul>
-            </motion.nav>
+            </nav>
           )}
         </AnimatePresence>
       </header>

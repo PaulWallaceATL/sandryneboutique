@@ -24,7 +24,7 @@ const CATEGORY_TILES = [
 
 export function CategoryShowcase() {
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28 below-fold-section">
       <div className="mb-12 sm:mb-16 max-w-3xl">
         <h2 className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-5">
           Shop by Category
@@ -67,6 +67,8 @@ export function CategoryShowcase() {
                 src={tile.image}
                 alt={tile.label}
                 fill
+                loading="lazy"
+                fetchPriority="low"
                 sizes="(max-width: 640px) 100vw, 33vw"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
               />

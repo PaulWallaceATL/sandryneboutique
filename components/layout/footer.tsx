@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CATEGORIES, SITE_NAME, SOCIAL_LINKS } from "@/lib/constants";
-import { NewsletterForm } from "@/components/layout/newsletter-form";
+import { NewsletterFormLazy } from "@/components/layout/newsletter-form-lazy";
 import { InstagramIcon, TikTokIcon } from "@/components/icons/social";
 
 const POLICY_LINKS = [
@@ -89,7 +89,7 @@ export function Footer() {
               Join the list for new arrivals, editorial picks, and private offers —
               and unlock 10% off your first order.
             </p>
-            <NewsletterForm />
+            <NewsletterFormLazy />
           </div>
         </div>
 

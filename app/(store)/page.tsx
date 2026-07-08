@@ -66,7 +66,7 @@ export default async function HomePage() {
       <TaglineMarquee />
       <CategoryShowcase />
 
-      <LazySection minHeight="540px">
+      <LazySection minHeight="540px" rootMargin="80px" className="below-fold-section">
         <ArrivalsCarousel products={freshPicks} />
       </LazySection>
 
@@ -90,13 +90,13 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6">
-          {newArrivals.map((product, i) => (
-            <ProductCard key={product.id} product={product} priority={i < 2} />
+          {newArrivals.map((product) => (
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
 
-      <LazySection minHeight="480px">
+      <LazySection minHeight="480px" rootMargin="80px">
         <BrandSection />
       </LazySection>
     </>

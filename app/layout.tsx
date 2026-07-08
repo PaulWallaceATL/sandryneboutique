@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
+import { ToasterLazy } from "@/components/ui/toaster-lazy";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/seo/jsonld";
 import "./globals.css";
@@ -8,11 +8,15 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+  adjustFontFallback: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
 });
 
 const cormorant = Cormorant_Garamond({
@@ -21,6 +25,8 @@ const cormorant = Cormorant_Garamond({
   weight: ["300", "400"],
   style: ["normal", "italic"],
   display: "swap",
+  adjustFontFallback: true,
+  preload: true,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -78,10 +84,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-full flex flex-col">
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd()]} />
         {children}
-        <Toaster position="bottom-center" />
+        <ToasterLazy />
       </body>
     </html>
   );
