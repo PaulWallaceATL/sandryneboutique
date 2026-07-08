@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/server";
+import { supabaseConfigured } from "@/lib/data/products";
 import { getSessionInfo } from "@/lib/auth";
 import { isAuthBypassEnabled } from "@/lib/auth-config";
 import { signOut } from "@/app/actions/auth";
@@ -27,13 +28,15 @@ export default async function AccountPage() {
   const { user, profile } = await getSessionInfo();
   if (!user) redirect("/login?next=/account");
 
-  const supabase = await createClient();
-  const { data: orderRows } = await supabase
-    .from("orders")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  const orders = (orderRows ?? []) as Order[];
+  let orders: Order[] = [];
+  if (supabaseConfigured()) {
+    const supabase = await createClient();
+    const { data: orderRows } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+    orders = (orderRows ?? []) as Order[];
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">

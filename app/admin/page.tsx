@@ -8,6 +8,7 @@ import {
   type StatusPoint,
 } from "@/components/admin/revenue-charts";
 import { createPrivilegedClient } from "@/lib/supabase/server";
+import { supabaseConfigured } from "@/lib/data/products";
 import type { Order } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
 
@@ -18,14 +19,19 @@ export const metadata: Metadata = {
 const REVENUE_STATUSES: Order["status"][] = ["paid", "shipped"];
 
 export default async function AdminDashboardPage() {
-  const supabase = await createPrivilegedClient();
+  let orders: Order[] = [];
+  let productCount = 0;
 
-  const [{ data: orderRows }, { count: productCount }] = await Promise.all([
-    supabase.from("orders").select("*").order("created_at", { ascending: true }),
-    supabase.from("products").select("id", { count: "exact", head: true }),
-  ]);
+  if (supabaseConfigured()) {
+    const supabase = await createPrivilegedClient();
+    const [{ data: orderRows }, { count }] = await Promise.all([
+      supabase.from("orders").select("*").order("created_at", { ascending: true }),
+      supabase.from("products").select("id", { count: "exact", head: true }),
+    ]);
+    orders = (orderRows ?? []) as Order[];
+    productCount = count ?? 0;
+  }
 
-  const orders = (orderRows ?? []) as Order[];
   const revenueOrders = orders.filter((o) => REVENUE_STATUSES.includes(o.status));
 
   const totalRevenue = revenueOrders.reduce((sum, o) => sum + Number(o.total_amount), 0);

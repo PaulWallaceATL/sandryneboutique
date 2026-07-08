@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { FALLBACK_PRODUCTS } from "@/lib/data/fallback-catalog";
+import { CATEGORIES } from "@/lib/constants";
 import type { Product } from "@/lib/types";
 import { effectivePrice } from "@/lib/types";
 
@@ -115,6 +116,52 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     return null;
   }
   return data as Product | null;
+}
+
+export interface MenuProduct {
+  slug: string;
+  name: string;
+  price: number;
+  compareAtPrice: number | null;
+  image: string | null;
+  description: string;
+}
+
+function toMenuProduct(p: Product): MenuProduct {
+  return {
+    slug: p.slug,
+    name: p.name,
+    price: effectivePrice(p),
+    compareAtPrice: p.on_sale ? p.price : null,
+    image: p.images[0] ?? null,
+    description: p.description,
+  };
+}
+
+/**
+ * Products grouped by category slug for the header mega menu.
+ * Virtual categories: new-arrivals (is_new), sale (on_sale).
+ */
+export async function getMegaMenuProducts(
+  perCategory = 4
+): Promise<Record<string, MenuProduct[]>> {
+  const all = await getProducts();
+  const map: Record<string, MenuProduct[]> = {};
+
+  for (const cat of CATEGORIES) {
+    let items: Product[];
+    if (cat.slug === "new-arrivals") {
+      items = all.filter((p) => p.is_new);
+      if (items.length === 0) items = all;
+    } else if (cat.slug === "sale") {
+      items = all.filter((p) => p.on_sale);
+    } else {
+      items = all.filter((p) => p.category === cat.dbCategory);
+    }
+    map[cat.slug] = items.slice(0, perCategory).map(toMenuProduct);
+  }
+
+  return map;
 }
 
 export async function getProductsByIds(ids: string[]): Promise<Product[]> {

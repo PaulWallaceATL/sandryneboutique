@@ -1,19 +1,27 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, ShoppingBag, User, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/constants";
+import type { MenuProduct } from "@/lib/data/products";
 import { cartCount, useCart } from "@/lib/store/cart";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
+import { formatPrice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+interface HeaderProps {
+  menu?: Record<string, MenuProduct[]>;
+}
+
+export function Header({ menu = {} }: HeaderProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const items = useCart((s) => s.items);
   const openCart = useCart((s) => s.openCart);
   const hydrated = useHydrated();
@@ -31,7 +39,15 @@ export function Header() {
     };
   }, []);
 
+  // Close menus on navigation.
+  useEffect(() => {
+    setMenuOpen(false);
+    setActiveCategory(null);
+  }, [pathname]);
+
   const closeMenu = () => setMenuOpen(false);
+  const activeProducts = activeCategory ? menu[activeCategory] ?? [] : [];
+  const activeDef = CATEGORIES.find((c) => c.slug === activeCategory);
 
   return (
     <>
@@ -44,6 +60,7 @@ export function Header() {
           "sticky top-0 z-40 transition-shadow duration-300 glass",
           scrolled && "shadow-[0_1px_24px_rgba(0,0,0,0.06)]"
         )}
+        onMouseLeave={() => setActiveCategory(null)}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-3 items-center h-16">
@@ -88,11 +105,13 @@ export function Header() {
           <nav className="hidden lg:flex items-center justify-center gap-8 pb-3.5">
             {CATEGORIES.map((cat) => {
               const href = `/shop/${cat.slug}`;
-              const active = pathname === href;
+              const active = pathname === href || activeCategory === cat.slug;
               return (
                 <Link
                   key={cat.slug}
                   href={href}
+                  onMouseEnter={() => setActiveCategory(cat.slug)}
+                  onFocus={() => setActiveCategory(cat.slug)}
                   className={cn(
                     "relative text-[11px] tracking-[0.18em] uppercase transition-opacity hover:opacity-100",
                     active ? "opacity-100" : "opacity-60",
@@ -100,7 +119,7 @@ export function Header() {
                   )}
                 >
                   {cat.label}
-                  {active && (
+                  {(pathname === href || activeCategory === cat.slug) && (
                     <motion.span
                       layoutId="nav-underline"
                       className="absolute -bottom-1 left-0 right-0 h-px bg-foreground"
@@ -111,6 +130,81 @@ export function Header() {
             })}
           </nav>
         </div>
+
+        <AnimatePresence>
+          {activeCategory && activeProducts.length > 0 && (
+            <motion.div
+              key={activeCategory}
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
+              className="hidden lg:block absolute inset-x-0 top-full border-t border-foreground/8 bg-background/98 backdrop-blur-xl shadow-[0_18px_40px_rgba(0,0,0,0.08)]"
+            >
+              <div className="mx-auto max-w-7xl px-6 py-8">
+                <div className="flex items-end justify-between mb-6">
+                  <div>
+                    <p className="font-serif text-xl tracking-tight">{activeDef?.label}</p>
+                    {activeDef?.description && (
+                      <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                        {activeDef.description}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href={`/shop/${activeCategory}`}
+                    className="text-[11px] tracking-[0.18em] uppercase border-b border-foreground/40 pb-0.5 hover:border-foreground transition-colors whitespace-nowrap"
+                  >
+                    Shop All
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-4 gap-6">
+                  {activeProducts.map((product) => (
+                    <Link
+                      key={product.slug}
+                      href={`/products/${product.slug}`}
+                      className="group block"
+                    >
+                      <div className="relative aspect-3/4 overflow-hidden bg-muted">
+                        {product.image && (
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            sizes="240px"
+                            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                          />
+                        )}
+                      </div>
+                      <h3 className="mt-3 text-sm leading-snug group-hover:underline underline-offset-4">
+                        {product.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {product.description}
+                      </p>
+                      <div className="mt-1.5 flex items-baseline gap-2 text-sm">
+                        <span
+                          className={cn(
+                            "tabular-nums",
+                            product.compareAtPrice && "text-destructive"
+                          )}
+                        >
+                          {formatPrice(product.price)}
+                        </span>
+                        {product.compareAtPrice && (
+                          <span className="text-muted-foreground line-through tabular-nums text-xs">
+                            {formatPrice(product.compareAtPrice)}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {menuOpen && (

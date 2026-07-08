@@ -125,7 +125,7 @@ values
     'Cut on the bias so it moves like water. Sits at the natural waist with an invisible zip.',
     96.00,
     array[
-      'https://images.unsplash.com/photo-1583496661160-fb5886a13d77?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=1200&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1551163943-3f6a855d1153?q=80&w=1200&auto=format&fit=crop'
     ],
     16, 'bottoms', 'bias-satin-midi-skirt',
