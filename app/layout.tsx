@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
+import CurtainPreloader from "@/components/react-bits/curtain-preloader";
 import { ToasterLazy } from "@/components/ui/toaster-lazy";
 import { JsonLd } from "@/components/seo/json-ld";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/seo/jsonld";
@@ -86,8 +87,18 @@ export default function RootLayout({
     >
       <head>
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <script
+          // Runs synchronously before first paint: shows the curtain preloader
+          // only on the first visit of a session, and flags JS availability so
+          // scroll-reveal text can stay visible for no-JS visitors.
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){document.documentElement.setAttribute('data-js','');try{if(!sessionStorage.getItem('sandryne_seen'))document.documentElement.setAttribute('data-preloader','show')}catch(e){}})();",
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col">
+        <CurtainPreloader />
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd()]} />
         {children}
         <ToasterLazy />

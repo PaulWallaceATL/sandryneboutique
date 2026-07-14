@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { InstagramIcon } from "@/components/icons/social";
+import { AuroraVeil } from "@/components/react-bits/aurora-veil";
 import SpotlightCard from "@/components/react-bits/spotlight-card";
 import VariableProximity from "@/components/react-bits/variable-proximity";
 import { SOCIAL_LINKS } from "@/lib/constants";
@@ -25,7 +26,11 @@ export function BrandSection() {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   return (
-    <section ref={containerRef} className="relative bg-foreground text-background py-24 sm:py-32">
+    <section
+      ref={containerRef}
+      className="relative isolate bg-foreground text-background py-24 sm:py-32"
+    >
+      <AuroraVeil tone="dark" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center mb-16 sm:mb-20">
           <p className="text-[11px] tracking-[0.24em] uppercase text-background/60 mb-6">

@@ -6,6 +6,7 @@ import { Hero1 } from "@/components/blocks/hero-1";
 import { TaglineMarquee } from "@/components/home/tagline-marquee";
 import { CategoryShowcase } from "@/components/home/category-showcase";
 import { ProductCard } from "@/components/product/product-card";
+import RevealText from "@/components/react-bits/reveal-text";
 import { LazySection } from "@/components/ui/lazy-section";
 import { getProducts } from "@/lib/data/products";
 
@@ -77,7 +78,9 @@ export default async function HomePage() {
               Just In
             </p>
             <h2 className="font-serif text-4xl sm:text-5xl tracking-tight">
-              New <em className="italic font-light">Arrivals</em>
+              <RevealText>
+                New <em className="italic font-light">Arrivals</em>
+              </RevealText>
             </h2>
           </div>
           <Link

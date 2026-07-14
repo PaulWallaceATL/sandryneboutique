@@ -205,3 +205,169 @@
     contain-intrinsic-size: auto 540px;
   }
 }
+
+/*
+ * Curtain preloader gate: hidden by default (no-JS and returning visitors),
+ * shown only when the inline <head> script marks a first visit this session.
+ * The attribute is set before first paint, so there is never a flash.
+ *
+ * The exit is pure CSS timed from first paint — it does not wait for
+ * hydration, so slow devices are never stuck behind the curtain and Speed
+ * Index stays low. React only removes the node afterwards.
+ */
+html[data-preloader="show"] #sandryne-preloader {
+  display: flex;
+}
+
+.preloader-slat {
+  /* Per-slat stagger comes from an inline animation-delay. */
+  animation: preloader-slat-exit 0.8s cubic-bezier(0.76, 0, 0.24, 1) both;
+}
+
+.preloader-wordmark {
+  animation: preloader-wordmark-exit 0.3s ease-out 0.55s both;
+}
+
+@keyframes preloader-slat-exit {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100.5%);
+  }
+}
+
+@keyframes preloader-wordmark-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preloader-slat {
+    animation: preloader-fade 0.15s linear both;
+    animation-delay: 0.6s !important;
+  }
+
+  .preloader-wordmark {
+    animation: preloader-fade 0.15s linear 0.5s both;
+  }
+}
+
+@keyframes preloader-fade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/*
+ * RevealText line-mask reveal. The hidden state and transition are gated on
+ * data-js (set by the inline <head> script before first paint) so text is
+ * always visible without JavaScript, and never masked for reduced-motion
+ * users. React only toggles .is-revealed when the text scrolls into view.
+ */
+html[data-js] .reveal-text-inner {
+  transform: translateY(110%);
+  transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-js] .reveal-text-inner.is-revealed {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-js] .reveal-text-inner {
+    transform: none;
+    transition: none;
+  }
+}
+
+/*
+ * Aurora veil: slow-drifting blurred gradient blobs (see
+ * components/react-bits/aurora-veil.tsx). Transform-only animation on
+ * blur-filtered layers keeps it fully GPU-composited.
+ */
+.aurora-veil-light {
+  --aurora-a: oklch(0.9 0.035 78 / 0.55);
+  --aurora-b: oklch(0.92 0.03 55 / 0.45);
+  --aurora-c: oklch(0.94 0.025 100 / 0.4);
+}
+
+.aurora-veil-dark {
+  --aurora-a: oklch(0.968 0.02 78 / 0.1);
+  --aurora-b: oklch(0.9 0.03 55 / 0.08);
+  --aurora-c: oklch(0.95 0.02 100 / 0.07);
+}
+
+.aurora-blob {
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+}
+
+.aurora-blob-a {
+  width: 44%;
+  top: -12%;
+  right: -8%;
+  background: radial-gradient(circle, var(--aurora-a), transparent 70%);
+  animation: aurora-drift-a 22s ease-in-out infinite alternate;
+}
+
+.aurora-blob-b {
+  width: 38%;
+  bottom: -14%;
+  right: 22%;
+  background: radial-gradient(circle, var(--aurora-b), transparent 70%);
+  animation: aurora-drift-b 27s ease-in-out infinite alternate;
+}
+
+.aurora-blob-c {
+  width: 32%;
+  top: 26%;
+  left: -6%;
+  background: radial-gradient(circle, var(--aurora-c), transparent 70%);
+  animation: aurora-drift-c 31s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift-a {
+  from {
+    transform: translate3d(-6%, -4%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(8%, 10%, 0) scale(1.18);
+  }
+}
+
+@keyframes aurora-drift-b {
+  from {
+    transform: translate3d(6%, 6%, 0) scale(1.12);
+  }
+  to {
+    transform: translate3d(-10%, -6%, 0) scale(0.94);
+  }
+}
+
+@keyframes aurora-drift-c {
+  from {
+    transform: translate3d(-4%, 8%, 0) scale(0.96);
+  }
+  to {
+    transform: translate3d(10%, -8%, 0) scale(1.14);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob {
+    animation: none;
+  }
+}

@@ -1,10 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { AuroraVeil } from "@/components/react-bits/aurora-veil";
+import Magnetic from "@/components/react-bits/magnetic";
 
 export function Hero1() {
   return (
-    <section className="w-full flex items-start lg:items-center py-10 sm:py-14 px-4 sm:px-6 lg:px-8 bg-background">
+    <section className="relative isolate w-full flex items-start lg:items-center py-10 sm:py-14 px-4 sm:px-6 lg:px-8 bg-background">
+      <AuroraVeil />
       <div className="max-w-[1400px] mx-auto w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-16 items-center">
           <div className="flex flex-col space-y-6 sm:space-y-8">
@@ -30,19 +33,23 @@ export function Hero1() {
             </p>
 
             <div className="hero-fade-up hero-delay-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-              <Link
-                href="/shop/new-arrivals"
-                className="relative overflow-hidden flex items-center justify-center px-8 py-3.5 bg-foreground text-background text-[11px] tracking-[0.22em] uppercase hover:bg-foreground/85 transition-colors w-full sm:w-auto"
-              >
-                Explore Summer Collection
-              </Link>
-              <Link
-                href="/shop/sale"
-                className="flex items-center justify-center gap-2 px-8 py-3.5 border border-foreground/20 text-[11px] tracking-[0.22em] uppercase hover:bg-foreground/5 transition-colors w-full sm:w-auto group"
-              >
-                Shop the Sale
-                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
-              </Link>
+              <Magnetic className="w-full sm:w-auto">
+                <Link
+                  href="/shop/new-arrivals"
+                  className="relative overflow-hidden flex items-center justify-center px-8 py-3.5 bg-foreground text-background text-[11px] tracking-[0.22em] uppercase hover:bg-foreground/85 transition-colors w-full"
+                >
+                  Explore Summer Collection
+                </Link>
+              </Magnetic>
+              <Magnetic className="w-full sm:w-auto">
+                <Link
+                  href="/shop/sale"
+                  className="flex items-center justify-center gap-2 px-8 py-3.5 border border-foreground/20 text-[11px] tracking-[0.22em] uppercase hover:bg-foreground/5 transition-colors w-full group"
+                >
+                  Shop the Sale
+                  <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Magnetic>
             </div>
 
             <div className="hero-fade-up hero-delay-4 flex items-center gap-4 pt-2 sm:pt-4">
@@ -72,13 +79,15 @@ export function Hero1() {
                 </svg>
                 <div className="relative">
                   <div className="w-24 h-24 bg-background pl-4 pt-4">
-                    <Link
-                      href="/shop/dresses"
-                      aria-label="Shop dresses"
-                      className="w-full h-full flex items-center justify-center bg-foreground hover:opacity-90 transition-opacity"
-                    >
-                      <ArrowRight className="w-6 h-6 text-background -rotate-45" />
-                    </Link>
+                    <Magnetic className="w-full h-full" maxOffset={5}>
+                      <Link
+                        href="/shop/dresses"
+                        aria-label="Shop dresses"
+                        className="w-full h-full flex items-center justify-center bg-foreground hover:opacity-90 transition-opacity"
+                      >
+                        <ArrowRight className="w-6 h-6 text-background -rotate-45" />
+                      </Link>
+                    </Magnetic>
                   </div>
                   <svg
                     width="40"

@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import Magnetic from "@/components/react-bits/magnetic";
+import RevealText from "@/components/react-bits/reveal-text";
 import type { Product } from "@/lib/types";
 import { effectivePrice, formatPrice } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -96,7 +98,9 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
             This Week&rsquo;s
           </p>
           <h2 className="font-serif text-4xl sm:text-5xl tracking-tight">
-            Fresh <em className="italic font-light">Summer</em> Picks
+            <RevealText>
+              Fresh <em className="italic font-light">Summer</em> Picks
+            </RevealText>
           </h2>
         </div>
         <Link
@@ -114,35 +118,41 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
           aria-hidden
         />
 
-        <button
-          type="button"
-          onClick={scrollPrev}
-          disabled={!canScrollLeft}
-          aria-label="Show previous pick"
-          className={cn(
-            "absolute left-2 sm:left-4 top-1/2 z-10 -translate-y-1/2",
-            "flex size-10 sm:size-11 items-center justify-center",
-            "border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-sm",
-            "transition-opacity hover:bg-background disabled:pointer-events-none disabled:opacity-30",
-          )}
-        >
-          <ArrowLeft className="size-4" strokeWidth={1.5} />
-        </button>
+        <div className="absolute left-2 sm:left-4 top-1/2 z-10 -translate-y-1/2">
+          <Magnetic maxOffset={5}>
+            <button
+              type="button"
+              onClick={scrollPrev}
+              disabled={!canScrollLeft}
+              aria-label="Show previous pick"
+              className={cn(
+                "flex size-10 sm:size-11 items-center justify-center",
+                "border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-sm",
+                "transition-opacity hover:bg-background disabled:pointer-events-none disabled:opacity-30",
+              )}
+            >
+              <ArrowLeft className="size-4" strokeWidth={1.5} />
+            </button>
+          </Magnetic>
+        </div>
 
-        <button
-          type="button"
-          onClick={scrollNext}
-          disabled={!canScrollRight}
-          aria-label="Show next pick"
-          className={cn(
-            "absolute right-2 sm:right-4 top-1/2 z-10 -translate-y-1/2",
-            "flex size-10 sm:size-11 items-center justify-center",
-            "border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-sm",
-            "transition-opacity hover:bg-background disabled:pointer-events-none disabled:opacity-30",
-          )}
-        >
-          <ArrowRight className="size-4" strokeWidth={1.5} />
-        </button>
+        <div className="absolute right-2 sm:right-4 top-1/2 z-10 -translate-y-1/2">
+          <Magnetic maxOffset={5}>
+            <button
+              type="button"
+              onClick={scrollNext}
+              disabled={!canScrollRight}
+              aria-label="Show next pick"
+              className={cn(
+                "flex size-10 sm:size-11 items-center justify-center",
+                "border border-foreground/15 bg-background/90 backdrop-blur-sm shadow-sm",
+                "transition-opacity hover:bg-background disabled:pointer-events-none disabled:opacity-30",
+              )}
+            >
+              <ArrowRight className="size-4" strokeWidth={1.5} />
+            </button>
+          </Magnetic>
+        </div>
 
         <div
           ref={scrollRef}
@@ -156,6 +166,7 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
         >
           {products.map((product, index) => {
             const isActive = index === activeIndex;
+            const hasHoverImage = product.images.length > 1;
 
             return (
               <article
@@ -180,7 +191,20 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
                         fill
                         loading={index === 0 ? "eager" : "lazy"}
                         sizes="(max-width: 640px) 72vw, 300px"
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        className={cn(
+                          "object-cover transition-all duration-700 ease-out group-hover:scale-[1.03]",
+                          hasHoverImage && "group-hover:opacity-0",
+                        )}
+                      />
+                    )}
+                    {hasHoverImage && (
+                      <Image
+                        src={product.images[1]}
+                        alt={`${product.name} — alternate view`}
+                        fill
+                        loading="lazy"
+                        sizes="(max-width: 640px) 72vw, 300px"
+                        className="object-cover opacity-0 scale-[1.03] transition-all duration-700 ease-out group-hover:opacity-100"
                       />
                     )}
                   </div>
