@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Header } from "@/components/layout/header";
 import { PromoBar } from "@/components/layout/promo-bar";
 import { Footer } from "@/components/layout/footer";
@@ -13,7 +14,9 @@ export default async function StoreLayout({
   return (
     <>
       <PromoBar />
-      <Header menu={menu} />
+      <Suspense fallback={<header className="h-20 border-b border-foreground/8" />}>
+        <Header menu={menu} />
+      </Suspense>
       <main className="flex-1">{children}</main>
       <Footer />
       <CartDrawerLazy />

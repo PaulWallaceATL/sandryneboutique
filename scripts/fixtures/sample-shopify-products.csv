@@ -1,0 +1,7 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Variant Price,Variant Compare At Price,Variant Inventory Qty,Image Src,Image Position,Status
+lace-tank,LACE TANK,"<p>Soft lace tank for layering.</p>",YFB CLOTHING,Tops,"new, summer",true,Size,S,Color,Black,48.00,60.00,2,https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800,1,active
+lace-tank,,,,,,true,Size,M,Color,Black,48.00,60.00,1,,,active
+skirt,SKIRT,"<p>Midi skirt with clean line.</p>",CPW,Skirts,bottoms,true,Size,S,,,72.00,,3,,1,draft
+skirt,,,,,,true,Size,M,,,72.00,,0,,,draft
+baseball-hat,BASEBALL HAT,"<p>Structured cap.</p>",GOAT STOCK,Hats,accessories,false,Title,Default Title,,,32.00,,5,https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800,1,active
+old-coat,OLD COAT,"<p>Archived coat.</p>",CPW,Coats,,false,Title,Default Title,,,100.00,,0,,1,archived

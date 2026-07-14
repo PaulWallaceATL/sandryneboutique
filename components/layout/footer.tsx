@@ -51,7 +51,7 @@ export function Footer() {
               {CATEGORIES.map((cat) => (
                 <li key={cat.slug}>
                   <Link
-                    href={`/shop/${cat.slug}`}
+                    href={`/shop?category=${cat.slug}`}
                     className="text-sm hover:opacity-60 transition-opacity"
                   >
                     {cat.label}

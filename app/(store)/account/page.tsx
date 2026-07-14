@@ -88,7 +88,7 @@ export default async function AccountPage() {
               When you place your first order, it will appear here.
             </p>
             <Button asChild variant="outline" className="rounded-none tracking-[0.18em] uppercase text-xs">
-              <Link href="/shop/new-arrivals">Explore New Arrivals</Link>
+              <Link href="/shop?category=new-arrivals">Explore New Arrivals</Link>
             </Button>
           </div>
         ) : (

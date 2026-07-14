@@ -84,7 +84,7 @@ export default async function ProductPage({ params }: PageProps) {
   const breadcrumbs = [
     { name: "Home", path: "/" },
     ...(categoryDef
-      ? [{ name: categoryDef.label, path: `/shop/${categoryDef.slug}` }]
+      ? [{ name: categoryDef.label, path: `/shop?category=${categoryDef.slug}` }]
       : []),
     { name: product.name },
   ];
@@ -109,7 +109,7 @@ export default async function ProductPage({ params }: PageProps) {
             <>
               <li>
                 <Link
-                  href={`/shop/${categoryDef.slug}`}
+                  href={`/shop?category=${categoryDef.slug}`}
                   className="hover:text-foreground transition-colors"
                 >
                   {categoryDef.label}

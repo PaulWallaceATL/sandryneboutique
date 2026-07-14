@@ -37,6 +37,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Shopify / migration exports (keep locally; do not commit client catalog)
+/data/*.csv
+/data/*.xlsx
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
+import { CATEGORIES } from "@/lib/constants";
+import { shopHref } from "@/lib/shop";
 import { formatPrice } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,7 @@ interface FilterBarProps {
   availableColors: string[];
   maxCatalogPrice: number;
   resultCount: number;
+  activeCategory?: string | null;
 }
 
 const SORT_OPTIONS = [
@@ -42,49 +45,114 @@ export function FilterBar({
   availableColors,
   maxCatalogPrice,
   resultCount,
+  activeCategory = null,
 }: FilterBarProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const currentSort = searchParams.get("sort") ?? "newest";
   const currentSize = searchParams.get("size");
   const currentColor = searchParams.get("color");
+  const currentCategory = searchParams.get("category") ?? activeCategory;
   const currentMax = Number(searchParams.get("max") ?? maxCatalogPrice);
 
   const [pendingMax, setPendingMax] = useState(currentMax);
 
-  const setParam = useCallback(
-    (key: string, value: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value === null) {
-        params.delete(key);
-      } else {
-        params.set(key, value);
-      }
-      router.replace(`${pathname}${params.size ? `?${params}` : ""}`, { scroll: false });
+  const navigate = useCallback(
+    (patch: {
+      category?: string | null;
+      size?: string | null;
+      color?: string | null;
+      sort?: string | null;
+      max?: string | null;
+    }) => {
+      const nextCategory =
+        patch.category === undefined ? currentCategory : patch.category;
+      const nextSize = patch.size === undefined ? currentSize : patch.size;
+      const nextColor = patch.color === undefined ? currentColor : patch.color;
+      const nextSort =
+        patch.sort === undefined
+          ? currentSort === "newest"
+            ? null
+            : currentSort
+          : patch.sort;
+      const nextMax =
+        patch.max === undefined
+          ? searchParams.get("max")
+          : patch.max;
+
+      router.replace(
+        shopHref({
+          category: nextCategory,
+          size: nextSize,
+          color: nextColor,
+          sort: nextSort,
+          max: nextMax,
+          page: 1,
+        }),
+        { scroll: false }
+      );
     },
-    [router, pathname, searchParams]
+    [router, currentCategory, currentSize, currentColor, currentSort, searchParams]
   );
 
   const activeFilters = useMemo(() => {
     const filters: { key: string; label: string }[] = [];
+    if (currentCategory) {
+      const label =
+        CATEGORIES.find((c) => c.slug === currentCategory)?.label ?? currentCategory;
+      filters.push({ key: "category", label });
+    }
     if (currentSize) filters.push({ key: "size", label: `Size ${currentSize}` });
     if (currentColor) filters.push({ key: "color", label: currentColor });
     if (searchParams.get("max")) {
       filters.push({ key: "max", label: `Under ${formatPrice(currentMax)}` });
     }
     return filters;
-  }, [currentSize, currentColor, currentMax, searchParams]);
+  }, [currentCategory, currentSize, currentColor, currentMax, searchParams]);
 
   const clearAll = () => {
-    router.replace(pathname, { scroll: false });
+    router.replace("/shop", { scroll: false });
     setPendingMax(maxCatalogPrice);
   };
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2 pb-1 -mx-1 px-1 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => navigate({ category: null })}
+          className={cn(
+            "shrink-0 px-3 py-1.5 text-[11px] tracking-[0.16em] uppercase border transition-colors",
+            !currentCategory
+              ? "border-foreground bg-foreground text-background"
+              : "border-foreground/15 hover:border-foreground/40"
+          )}
+        >
+          All
+        </button>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.slug}
+            type="button"
+            onClick={() =>
+              navigate({
+                category: currentCategory === cat.slug ? null : cat.slug,
+              })
+            }
+            className={cn(
+              "shrink-0 px-3 py-1.5 text-[11px] tracking-[0.16em] uppercase border transition-colors",
+              currentCategory === cat.slug
+                ? "border-foreground bg-foreground text-background"
+                : "border-foreground/15 hover:border-foreground/40"
+            )}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -116,7 +184,9 @@ export function FilterBar({
                         <button
                           key={size}
                           type="button"
-                          onClick={() => setParam("size", currentSize === size ? null : size)}
+                          onClick={() =>
+                            navigate({ size: currentSize === size ? null : size })
+                          }
                           className={cn(
                             "min-w-11 px-3 py-2 border text-xs transition-colors",
                             currentSize === size
@@ -141,7 +211,9 @@ export function FilterBar({
                         <button
                           key={color}
                           type="button"
-                          onClick={() => setParam("color", currentColor === color ? null : color)}
+                          onClick={() =>
+                            navigate({ color: currentColor === color ? null : color })
+                          }
                           className={cn(
                             "px-3 py-2 border text-xs transition-colors",
                             currentColor === color
@@ -162,12 +234,14 @@ export function FilterBar({
                   </h3>
                   <Slider
                     min={0}
-                    max={maxCatalogPrice}
+                    max={maxCatalogPrice || 100}
                     step={5}
                     value={[pendingMax]}
                     onValueChange={([v]) => setPendingMax(v)}
                     onValueCommit={([v]) =>
-                      setParam("max", v >= maxCatalogPrice ? null : String(v))
+                      navigate({
+                        max: v >= maxCatalogPrice ? null : String(v),
+                      })
                     }
                   />
                 </div>
@@ -196,7 +270,10 @@ export function FilterBar({
           </span>
         </div>
 
-        <Select value={currentSort} onValueChange={(v) => setParam("sort", v === "newest" ? null : v)}>
+        <Select
+          value={currentSort}
+          onValueChange={(v) => navigate({ sort: v === "newest" ? null : v })}
+        >
           <SelectTrigger
             size="sm"
             className="rounded-none text-[11px] tracking-[0.18em] uppercase w-auto min-w-44"
@@ -225,7 +302,7 @@ export function FilterBar({
               <button
                 type="button"
                 aria-label={`Remove ${filter.label} filter`}
-                onClick={() => setParam(filter.key, null)}
+                onClick={() => navigate({ [filter.key]: null })}
                 className="hover:opacity-60"
               >
                 <X className="size-3" />

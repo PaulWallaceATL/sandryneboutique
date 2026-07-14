@@ -1,4 +1,5 @@
 import { SITE_NAME, SOCIAL_LINKS, type CategoryDef } from "@/lib/constants";
+import { shopHref } from "@/lib/shop";
 import { effectivePrice, type Post, type Product } from "@/lib/types";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -84,7 +85,7 @@ export function collectionPageJsonLd(category: CategoryDef, products: Product[])
     "@type": "CollectionPage",
     name: `${category.label} | ${SITE_NAME}`,
     description: category.description,
-    url: `${siteUrl}/shop/${category.slug}`,
+    url: `${siteUrl}${shopHref({ category: category.slug })}`,
     isPartOf: { "@id": `${siteUrl}/#website` },
     mainEntity: {
       "@type": "ItemList",

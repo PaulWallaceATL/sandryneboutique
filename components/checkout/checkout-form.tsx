@@ -169,7 +169,7 @@ export function CheckoutForm({ publicKey }: { publicKey: string | null }) {
       <div className="py-24 text-center">
         <p className="font-serif text-3xl mb-4">Your cart is empty</p>
         <Button asChild variant="outline" className="rounded-none tracking-[0.18em] uppercase text-xs">
-          <Link href="/shop/new-arrivals">Explore New Arrivals</Link>
+          <Link href="/shop?category=new-arrivals">Explore New Arrivals</Link>
         </Button>
       </div>
     );

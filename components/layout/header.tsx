@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Menu, ShoppingBag, User, X } from "lucide-react";
 import { CATEGORIES } from "@/lib/constants";
 import type { MenuProduct } from "@/lib/data/products";
+import { shopHref } from "@/lib/shop";
 import { cartCount, useCart } from "@/lib/store/cart";
 import { useHydrated } from "@/lib/hooks/use-hydrated";
 import { formatPrice } from "@/lib/types";
@@ -19,12 +20,14 @@ interface HeaderProps {
 
 export function Header({ menu = {} }: HeaderProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const items = useCart((s) => s.items);
   const openCart = useCart((s) => s.openCart);
   const hydrated = useHydrated();
+  const shopCategory = pathname === "/shop" ? searchParams.get("category") : null;
 
   // Cart is persisted in localStorage; defer count to after hydration.
   const count = hydrated ? cartCount(items) : 0;
@@ -43,7 +46,7 @@ export function Header({ menu = {} }: HeaderProps) {
   useEffect(() => {
     setMenuOpen(false);
     setActiveCategory(null);
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   const closeMenu = () => setMenuOpen(false);
   const activeProducts = activeCategory ? menu[activeCategory] ?? [] : [];
@@ -100,8 +103,8 @@ export function Header({ menu = {} }: HeaderProps) {
 
           <nav aria-label="Main navigation" className="hidden lg:flex items-center justify-center gap-8 pb-3.5">
             {CATEGORIES.map((cat) => {
-              const href = `/shop/${cat.slug}`;
-              const active = pathname === href || activeCategory === cat.slug;
+              const href = shopHref({ category: cat.slug });
+              const active = shopCategory === cat.slug || activeCategory === cat.slug;
               return (
                 <Link
                   key={cat.slug}
@@ -115,7 +118,7 @@ export function Header({ menu = {} }: HeaderProps) {
                   )}
                 >
                   {cat.label}
-                  {(pathname === href || activeCategory === cat.slug) && (
+                  {active && (
                     <motion.span
                       layoutId="nav-underline"
                       className="absolute -bottom-1 left-0 right-0 h-px bg-foreground"
@@ -166,7 +169,7 @@ export function Header({ menu = {} }: HeaderProps) {
                     )}
                   </div>
                   <Link
-                    href={`/shop/${activeCategory}`}
+                    href={shopHref({ category: activeCategory })}
                     className="text-[11px] tracking-[0.18em] uppercase border-b border-foreground/40 pb-0.5 hover:border-foreground transition-colors whitespace-nowrap"
                   >
                     Shop All
@@ -230,7 +233,7 @@ export function Header({ menu = {} }: HeaderProps) {
                 {CATEGORIES.map((cat) => (
                   <li key={cat.slug}>
                     <Link
-                      href={`/shop/${cat.slug}`}
+                      href={shopHref({ category: cat.slug })}
                       onClick={closeMenu}
                       className={cn(
                         "block py-2.5 font-serif text-2xl tracking-wide",

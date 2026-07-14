@@ -40,7 +40,7 @@ export function CartDrawer() {
               Be first to wear the story — explore this week&apos;s fresh picks.
             </p>
             <Button asChild variant="outline" className="rounded-none tracking-[0.18em] uppercase text-xs" onClick={closeCart}>
-              <Link href="/shop/new-arrivals">Explore New Arrivals</Link>
+              <Link href="/shop?category=new-arrivals">Explore New Arrivals</Link>
             </Button>
           </div>
         ) : (

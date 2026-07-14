@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { FALLBACK_PRODUCTS } from "@/lib/data/fallback-catalog";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, getCategory } from "@/lib/constants";
 import type { Product } from "@/lib/types";
 import { effectivePrice } from "@/lib/types";
 
@@ -8,6 +8,8 @@ export type ProductSort = "newest" | "price-asc" | "price-desc";
 
 export interface ProductQuery {
   category?: string;
+  /** Category slug from CATEGORIES (tops, new-arrivals, sale, …). Overrides `category` when set. */
+  collection?: string;
   onSale?: boolean;
   isNew?: boolean;
   minPrice?: number;
@@ -16,6 +18,22 @@ export interface ProductQuery {
   color?: string;
   sort?: ProductSort;
   limit?: number;
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  /**
+   * Storefront default: only products with at least one image and inventory > 0.
+   * Set false for admin / internal lookups.
+   */
+  shoppableOnly?: boolean;
+}
+
+export interface ProductPageResult {
+  products: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export function supabaseConfigured(): boolean {
@@ -24,13 +42,47 @@ export function supabaseConfigured(): boolean {
   );
 }
 
-function applyLocalQuery(products: Product[], q: ProductQuery): Product[] {
+/** Customer-facing catalog rule: must have photo(s) and stock. */
+export function isShoppable(product: Product): boolean {
+  return product.inventory_count > 0 && product.images.length > 0;
+}
+
+function resolveCollectionFlags(q: ProductQuery): ProductQuery {
+  if (!q.collection) return q;
+  const def = getCategory(q.collection);
+  if (!def) return { ...q, collection: undefined };
+
+  if (def.slug === "new-arrivals") {
+    return { ...q, collection: undefined, category: undefined, isNew: true };
+  }
+  if (def.slug === "sale") {
+    return { ...q, collection: undefined, category: undefined, onSale: true };
+  }
+  return {
+    ...q,
+    collection: undefined,
+    category: def.dbCategory ?? undefined,
+    isNew: undefined,
+    onSale: undefined,
+  };
+}
+
+function applyLocalQuery(products: Product[], raw: ProductQuery): Product[] {
+  const q = resolveCollectionFlags(raw);
+  const shoppableOnly = q.shoppableOnly !== false;
+
   let result = products.filter((p) => {
+    if (shoppableOnly && !isShoppable(p)) return false;
     if (q.category && p.category !== q.category) return false;
     if (q.onSale && !p.on_sale) return false;
     if (q.isNew && !p.is_new) return false;
     if (q.size && !p.sizes.includes(q.size)) return false;
     if (q.color && !p.colors.includes(q.color)) return false;
+    if (q.search) {
+      const needle = q.search.toLowerCase();
+      const hay = `${p.name} ${p.slug} ${p.description}`.toLowerCase();
+      if (!hay.includes(needle)) return false;
+    }
     const price = effectivePrice(p);
     if (q.minPrice != null && price < q.minPrice) return false;
     if (q.maxPrice != null && price > q.maxPrice) return false;
@@ -53,19 +105,56 @@ function applyLocalQuery(products: Product[], q: ProductQuery): Product[] {
   return q.limit ? result.slice(0, q.limit) : result;
 }
 
+function paginateLocal(products: Product[], page: number, pageSize: number): ProductPageResult {
+  const total = products.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(Math.max(1, page), totalPages);
+  const start = (safePage - 1) * pageSize;
+  return {
+    products: products.slice(start, start + pageSize),
+    total,
+    page: safePage,
+    pageSize,
+    totalPages,
+  };
+}
+
 export async function getProducts(q: ProductQuery = {}): Promise<Product[]> {
+  // Unpaginated listing for facets / menus (PostgREST typically caps ~1000 rows).
+  const page = await getProductsPage({
+    ...q,
+    page: 1,
+    pageSize: q.limit ?? 1000,
+  });
+  return page.products;
+}
+
+export async function getProductsPage(raw: ProductQuery = {}): Promise<ProductPageResult> {
+  const q = resolveCollectionFlags(raw);
+  const shoppableOnly = q.shoppableOnly !== false;
+  const pageSize = Math.max(1, q.pageSize ?? q.limit ?? 24);
+  const page = Math.max(1, q.page ?? 1);
+
   if (!supabaseConfigured()) {
-    return applyLocalQuery(FALLBACK_PRODUCTS, q);
+    const filtered = applyLocalQuery(FALLBACK_PRODUCTS, { ...q, limit: undefined });
+    return paginateLocal(filtered, page, pageSize);
   }
 
   const supabase = await createClient();
-  let query = supabase.from("products").select("*");
+  let query = supabase.from("products").select("*", { count: "exact" });
 
+  if (shoppableOnly) {
+    query = query.gt("inventory_count", 0).not("images", "eq", "{}");
+  }
   if (q.category) query = query.eq("category", q.category);
   if (q.onSale) query = query.eq("on_sale", true);
   if (q.isNew) query = query.eq("is_new", true);
   if (q.size) query = query.contains("sizes", [q.size]);
   if (q.color) query = query.contains("colors", [q.color]);
+  if (q.search?.trim()) {
+    const term = q.search.trim().replace(/[%_]/g, "");
+    query = query.or(`name.ilike.%${term}%,slug.ilike.%${term}%`);
+  }
 
   switch (q.sort) {
     case "price-asc":
@@ -78,25 +167,43 @@ export async function getProducts(q: ProductQuery = {}): Promise<Product[]> {
       query = query.order("created_at", { ascending: false });
   }
 
-  if (q.limit) query = query.limit(q.limit);
+  const needsPriceFilter = q.minPrice != null || q.maxPrice != null;
 
-  const { data, error } = await query;
-  if (error) {
-    console.error("Failed to fetch products:", error);
-    return [];
-  }
+  if (needsPriceFilter) {
+    const { data, error } = await query;
+    if (error) {
+      console.error("Failed to fetch products:", error);
+      return { products: [], total: 0, page: 1, pageSize, totalPages: 1 };
+    }
 
-  let products = (data ?? []) as Product[];
-  // Price filters compare against the effective (sale-aware) price, done in JS.
-  if (q.minPrice != null || q.maxPrice != null) {
+    let products = (data ?? []) as Product[];
     products = products.filter((p) => {
       const price = effectivePrice(p);
       if (q.minPrice != null && price < q.minPrice) return false;
       if (q.maxPrice != null && price > q.maxPrice) return false;
       return true;
     });
+    return paginateLocal(products, page, pageSize);
   }
-  return products;
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+  const { data, error, count } = await query.range(from, to);
+
+  if (error) {
+    console.error("Failed to fetch products:", error);
+    return { products: [], total: 0, page: 1, pageSize, totalPages: 1 };
+  }
+
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  return {
+    products: (data ?? []) as Product[],
+    total,
+    page: Math.min(page, totalPages),
+    pageSize,
+    totalPages,
+  };
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -145,7 +252,7 @@ function toMenuProduct(p: Product): MenuProduct {
 export async function getMegaMenuProducts(
   perCategory = 4
 ): Promise<Record<string, MenuProduct[]>> {
-  const all = await getProducts();
+  const all = await getProducts({ shoppableOnly: true });
   const map: Record<string, MenuProduct[]> = {};
 
   for (const cat of CATEGORIES) {

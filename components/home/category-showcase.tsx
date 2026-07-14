@@ -32,21 +32,21 @@ export function CategoryShowcase() {
         <p className="font-serif text-3xl sm:text-5xl leading-[1.15] tracking-tight">
           Tailored{" "}
           <Link
-            href="/shop/bottoms"
+            href="/shop?category=bottoms"
             className="italic underline decoration-1 underline-offset-8 decoration-foreground/30 hover:decoration-foreground transition-colors"
           >
             bottoms
           </Link>
           , fluid{" "}
           <Link
-            href="/shop/dresses"
+            href="/shop?category=dresses"
             className="italic underline decoration-1 underline-offset-8 decoration-foreground/30 hover:decoration-foreground transition-colors"
           >
             dresses
           </Link>
           , and crisp{" "}
           <Link
-            href="/shop/tops"
+            href="/shop?category=tops"
             className="italic underline decoration-1 underline-offset-8 decoration-foreground/30 hover:decoration-foreground transition-colors"
           >
             tops
@@ -59,7 +59,7 @@ export function CategoryShowcase() {
         {CATEGORY_TILES.map((tile) => (
           <Link
             key={tile.slug}
-            href={`/shop/${tile.slug}`}
+            href={`/shop?category=${tile.slug}`}
             className="group block relative overflow-hidden"
           >
             <div className="relative aspect-3/4 bg-muted">

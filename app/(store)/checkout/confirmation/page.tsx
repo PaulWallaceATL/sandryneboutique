@@ -34,7 +34,7 @@ async function ConfirmationContent({
       </p>
       <div className="flex flex-col sm:flex-row gap-3 mt-2">
         <Button asChild className="rounded-none tracking-[0.2em] uppercase text-xs h-11 px-8">
-          <Link href="/shop/new-arrivals">Continue Shopping</Link>
+          <Link href="/shop?category=new-arrivals">Continue Shopping</Link>
         </Button>
         <Button asChild variant="outline" className="rounded-none tracking-[0.2em] uppercase text-xs h-11 px-8">
           <Link href="/account">View My Orders</Link>

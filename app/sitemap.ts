@@ -3,6 +3,7 @@ import { CATEGORIES } from "@/lib/constants";
 import { POLICIES } from "@/lib/policies";
 import { getProducts } from "@/lib/data/products";
 import { getPosts } from "@/lib/data/posts";
+import { shopHref } from "@/lib/shop";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -24,12 +25,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const categoryRoutes: MetadataRoute.Sitemap = CATEGORIES.map((c) => ({
-    url: `${siteUrl}/shop/${c.slug}`,
-    lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.9,
-  }));
+  const categoryRoutes: MetadataRoute.Sitemap = [
+    {
+      url: `${siteUrl}/shop`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.95,
+    },
+    ...CATEGORIES.map((c) => ({
+      url: `${siteUrl}${shopHref({ category: c.slug })}`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    })),
+  ];
 
   const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${siteUrl}/products/${p.slug}`,

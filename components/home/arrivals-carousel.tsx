@@ -104,7 +104,7 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
           </h2>
         </div>
         <Link
-          href="/shop/new-arrivals"
+          href="/shop?category=new-arrivals"
           className="group flex items-center gap-2 text-[11px] tracking-[0.22em] uppercase hover:opacity-60 transition-opacity"
         >
           View all new arrivals
