@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/server";
+import { createPrivilegedClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/data/products";
 import type { Product } from "@/lib/types";
 import { effectivePrice, formatPrice } from "@/lib/types";
@@ -50,6 +50,31 @@ function adminHref(params: {
   return qs ? `/admin/products?${qs}` : "/admin/products";
 }
 
+function ProductBadges({ product }: { product: Product }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {product.images.length === 0 && (
+        <Badge variant="outline" className="rounded-none text-[10px] uppercase">
+          No photo
+        </Badge>
+      )}
+      {product.is_new && (
+        <Badge variant="secondary" className="rounded-none text-[10px] uppercase">
+          New
+        </Badge>
+      )}
+      {product.on_sale && (
+        <Badge className="rounded-none text-[10px] uppercase">Sale</Badge>
+      )}
+      {product.inventory_count === 0 && (
+        <Badge variant="destructive" className="rounded-none text-[10px] uppercase">
+          Out
+        </Badge>
+      )}
+    </div>
+  );
+}
+
 export default async function AdminProductsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const q = first(sp.q)?.trim() ?? "";
@@ -61,7 +86,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
   let total = 0;
 
   if (supabaseConfigured()) {
-    const supabase = await createClient();
+    const supabase = await createPrivilegedClient();
     let query = supabase
       .from("products")
       .select("*", { count: "exact" })
@@ -73,6 +98,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
     }
     if (category !== "all") query = query.eq("category", category);
     if (stock === "in") query = query.gt("inventory_count", 0);
+    if (stock === "low") query = query.lte("inventory_count", 5);
     if (stock === "out") query = query.eq("inventory_count", 0);
     if (stock === "no-image") query = query.eq("images", "{}");
 
@@ -86,8 +112,8 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
   const totalPages = Math.max(1, Math.ceil(total / ADMIN_PAGE_SIZE));
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-6 sm:space-y-8">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-serif text-3xl tracking-tight">Products</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -95,7 +121,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
             {q || category !== "all" || stock !== "all" ? " matching filters" : " in the catalog"}.
           </p>
         </div>
-        <Button asChild className="rounded-none tracking-[0.16em] uppercase text-xs gap-2">
+        <Button asChild className="rounded-none tracking-[0.16em] uppercase text-xs gap-2 w-full sm:w-auto">
           <Link href="/admin/products/new">
             <Plus className="size-4" />
             New Product
@@ -107,102 +133,128 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
         <ProductsToolbar />
       </Suspense>
 
-      <div className="border border-foreground/10">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16" />
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Inventory</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="py-16 text-center text-sm text-muted-foreground">
-                  No products match these filters.
-                </TableCell>
-              </TableRow>
-            ) : (
-              products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Link href={`/admin/products/${product.id}`}>
-                      <div className="relative w-10 h-13 bg-muted overflow-hidden">
-                        {product.images[0] && (
-                          <Image
-                            src={product.images[0]}
-                            alt=""
-                            fill
-                            sizes="40px"
-                            className="object-cover"
-                          />
+      {products.length === 0 ? (
+        <div className="py-16 text-center border border-dashed border-foreground/15">
+          <p className="font-serif text-2xl mb-2">No products found</p>
+          <p className="text-sm text-muted-foreground">Try different filters or add a new product.</p>
+        </div>
+      ) : (
+        <>
+          {/* Mobile cards */}
+          <ul className="md:hidden space-y-3">
+            {products.map((product) => (
+              <li key={product.id}>
+                <Link
+                  href={`/admin/products/${product.id}`}
+                  className="flex gap-3 border border-foreground/10 p-3 hover:bg-muted/40 transition-colors"
+                >
+                  <div className="relative w-16 h-20 bg-muted shrink-0 overflow-hidden">
+                    {product.images[0] && (
+                      <Image
+                        src={product.images[0]}
+                        alt=""
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <p className="font-medium leading-snug">{product.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">
+                      {product.category.replace("-", " & ")} ·{" "}
+                      <span
+                        className={cn(
+                          "tabular-nums",
+                          product.inventory_count === 0 && "text-destructive",
+                          product.inventory_count > 0 &&
+                            product.inventory_count <= 5 &&
+                            "text-amber-600"
                         )}
-                      </div>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/admin/products/${product.id}`}
-                      className="font-medium hover:underline underline-offset-4"
-                    >
-                      {product.name}
-                    </Link>
-                    <p className="text-xs text-muted-foreground font-mono">{product.slug}</p>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground capitalize">
-                    {product.category.replace("-", " & ")}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatPrice(effectivePrice(product))}
-                    {product.on_sale && (
-                      <span className="block text-xs text-muted-foreground line-through">
-                        {formatPrice(product.price)}
+                      >
+                        {product.inventory_count} in stock
                       </span>
-                    )}
-                  </TableCell>
-                  <TableCell
-                    className={cn(
-                      "text-right tabular-nums",
-                      product.inventory_count === 0 && "text-destructive",
-                      product.inventory_count > 0 &&
-                        product.inventory_count <= 5 &&
-                        "text-amber-600"
-                    )}
-                  >
-                    {product.inventory_count}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1.5">
-                      {product.images.length === 0 && (
-                        <Badge variant="outline" className="rounded-none text-[10px] uppercase">
-                          No photo
-                        </Badge>
-                      )}
-                      {product.is_new && (
-                        <Badge variant="secondary" className="rounded-none text-[10px] uppercase">
-                          New
-                        </Badge>
-                      )}
-                      {product.on_sale && (
-                        <Badge className="rounded-none text-[10px] uppercase">Sale</Badge>
-                      )}
-                      {product.inventory_count === 0 && (
-                        <Badge variant="destructive" className="rounded-none text-[10px] uppercase">
-                          Out
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
+                    </p>
+                    <p className="text-sm tabular-nums">{formatPrice(effectivePrice(product))}</p>
+                    <ProductBadges product={product} />
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop table */}
+          <div className="hidden md:block border border-foreground/10 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16" />
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Inventory</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <Link href={`/admin/products/${product.id}`}>
+                        <div className="relative w-10 h-13 bg-muted overflow-hidden">
+                          {product.images[0] && (
+                            <Image
+                              src={product.images[0]}
+                              alt=""
+                              fill
+                              sizes="40px"
+                              className="object-cover"
+                            />
+                          )}
+                        </div>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/admin/products/${product.id}`}
+                        className="font-medium hover:underline underline-offset-4"
+                      >
+                        {product.name}
+                      </Link>
+                      <p className="text-xs text-muted-foreground font-mono">{product.slug}</p>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground capitalize">
+                      {product.category.replace("-", " & ")}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {formatPrice(effectivePrice(product))}
+                      {product.on_sale && (
+                        <span className="block text-xs text-muted-foreground line-through">
+                          {formatPrice(product.price)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "text-right tabular-nums",
+                        product.inventory_count === 0 && "text-destructive",
+                        product.inventory_count > 0 &&
+                          product.inventory_count <= 5 &&
+                          "text-amber-600"
+                      )}
+                    >
+                      {product.inventory_count}
+                    </TableCell>
+                    <TableCell>
+                      <ProductBadges product={product} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
+      )}
 
       <CatalogPagination
         page={Math.min(page, totalPages)}
@@ -215,7 +267,7 @@ export default async function AdminProductsPage({ searchParams }: PageProps) {
             page: p,
           })
         }
-        className="pt-0"
+        className="pt-2"
       />
     </div>
   );

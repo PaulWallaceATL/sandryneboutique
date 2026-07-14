@@ -334,6 +334,26 @@ export async function updateHomepageSection(
   return { ok: true, message: "Homepage section saved." };
 }
 
+export async function deleteNewsletterSubscriber(id: string): Promise<ActionResult> {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  const supabase = await createPrivilegedClient();
+  const { error } = await supabase.from("newsletter_subscribers").delete().eq("id", id);
+
+  if (error) {
+    console.error("Newsletter delete failed:", error);
+    return {
+      ok: false,
+      message:
+        "Failed to remove subscriber. Confirm migration 006_newsletter_admin.sql was run in Supabase.",
+    };
+  }
+
+  revalidatePath("/admin/newsletter");
+  return { ok: true, message: "Subscriber removed." };
+}
+
 const ORDER_STATUSES: OrderStatus[] = ["pending", "paid", "shipped", "cancelled"];
 
 export async function updateOrderStatus(

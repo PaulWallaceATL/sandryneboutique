@@ -89,7 +89,7 @@ export function HomepageSectionForm({ section, products }: HomepageSectionFormPr
   };
 
   return (
-    <section className="border border-foreground/10 p-6 sm:p-8 space-y-6">
+    <section className="border border-foreground/10 p-4 sm:p-6 lg:p-8 space-y-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-[11px] tracking-[0.2em] uppercase text-muted-foreground">

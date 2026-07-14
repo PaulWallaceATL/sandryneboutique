@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Suspense } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -8,31 +8,24 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
+import { OrdersToolbar } from "@/components/admin/orders-toolbar";
 import { createPrivilegedClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/data/products";
 import type { Order, OrderStatus } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Orders",
 };
 
-const STATUS_FILTERS: { value: OrderStatus | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "pending", label: "Pending" },
-  { value: "paid", label: "Paid" },
-  { value: "shipped", label: "Shipped" },
-  { value: "cancelled", label: "Cancelled" },
-];
-
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; q?: string }>;
 }) {
-  const { status } = await searchParams;
+  const { status, q } = await searchParams;
   const activeFilter = (status as OrderStatus | undefined) ?? "all";
+  const queryText = q?.trim().toLowerCase() ?? "";
 
   let orders: Order[] = [];
   if (supabaseConfigured()) {
@@ -41,78 +34,87 @@ export default async function AdminOrdersPage({
     if (activeFilter !== "all") query = query.eq("status", activeFilter);
     const { data } = await query;
     orders = (data ?? []) as Order[];
+
+    if (queryText) {
+      orders = orders.filter((order) => {
+        const name = order.shipping_address.full_name.toLowerCase();
+        const email = order.email.toLowerCase();
+        return name.includes(queryText) || email.includes(queryText) || order.id.includes(queryText);
+      });
+    }
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <header>
         <h1 className="font-serif text-3xl tracking-tight">Orders</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage Heartland transactions and fulfillment.
+          {orders.length} {orders.length === 1 ? "order" : "orders"}
+          {activeFilter !== "all" || queryText ? " matching filters" : ""}.
         </p>
       </header>
 
-      <div className="flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((filter) => (
-          <Link
-            key={filter.value}
-            href={filter.value === "all" ? "/admin/orders" : `/admin/orders?status=${filter.value}`}
-            className={cn(
-              "px-4 py-1.5 border text-xs tracking-[0.14em] uppercase transition-colors",
-              activeFilter === filter.value
-                ? "border-foreground bg-foreground text-background"
-                : "border-foreground/20 hover:border-foreground"
-            )}
-          >
-            {filter.label}
-          </Link>
-        ))}
-      </div>
+      <Suspense>
+        <OrdersToolbar />
+      </Suspense>
 
       {orders.length === 0 ? (
-        <div className="py-20 text-center border border-dashed border-foreground/15">
+        <div className="py-16 sm:py-20 text-center border border-dashed border-foreground/15">
           <p className="font-serif text-2xl mb-2">No orders found</p>
-          <p className="text-sm text-muted-foreground">
-            {activeFilter === "all"
+          <p className="text-sm text-muted-foreground px-4">
+            {activeFilter === "all" && !queryText
               ? "Orders will appear here as customers check out."
-              : `No ${activeFilter} orders right now.`}
+              : "Try a different status or search."}
           </p>
         </div>
       ) : (
-        <Accordion type="multiple" className="border border-foreground/10 divide-y divide-foreground/8">
+        <Accordion
+          type="multiple"
+          className="border border-foreground/10 divide-y divide-foreground/8"
+        >
           {orders.map((order) => (
-            <AccordionItem key={order.id} value={order.id} className="border-b-0 px-5">
-              <AccordionTrigger className="hover:no-underline py-4">
-                <div className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-2 pr-4 text-left">
-                  <div className="min-w-44">
-                    <p className="text-sm font-medium">{order.shipping_address.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{order.email}</p>
+            <AccordionItem key={order.id} value={order.id} className="border-b-0 px-3 sm:px-5">
+              <AccordionTrigger className="hover:no-underline py-4 items-start">
+                <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2 pr-2 sm:pr-4 text-left w-full min-w-0">
+                  <div className="min-w-0 sm:min-w-44">
+                    <p className="text-sm font-medium truncate">
+                      {order.shipping_address.full_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{order.email}</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(order.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
-                  <Badge variant="secondary" className="rounded-none text-[10px] uppercase tracking-[0.14em]">
-                    {order.status}
-                  </Badge>
-                  <span className="ml-auto text-sm font-medium tabular-nums">
-                    {formatPrice(order.total_amount)}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(order.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <Badge
+                      variant="secondary"
+                      className="rounded-none text-[10px] uppercase tracking-[0.14em]"
+                    >
+                      {order.status}
+                    </Badge>
+                    <span className="text-sm font-medium tabular-nums sm:ml-auto">
+                      {formatPrice(order.total_amount)}
+                    </span>
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pb-5">
                 <div className="grid gap-6 lg:grid-cols-3">
-                  <div className="lg:col-span-2">
+                  <div className="lg:col-span-2 min-w-0">
                     <h3 className="text-[11px] tracking-[0.18em] uppercase text-muted-foreground mb-3">
                       Items
                     </h3>
                     <ul className="space-y-2">
                       {order.items.map((item, i) => (
-                        <li key={i} className="flex justify-between text-sm">
-                          <span>
+                        <li
+                          key={i}
+                          className="flex flex-col gap-0.5 xs:flex-row sm:flex-row sm:justify-between text-sm"
+                        >
+                          <span className="min-w-0">
                             {item.quantity} × {item.name}
                             {(item.size || item.color) && (
                               <span className="text-muted-foreground">
@@ -121,7 +123,7 @@ export default async function AdminOrdersPage({
                               </span>
                             )}
                           </span>
-                          <span className="tabular-nums">
+                          <span className="tabular-nums shrink-0">
                             {formatPrice(item.price * item.quantity)}
                           </span>
                         </li>

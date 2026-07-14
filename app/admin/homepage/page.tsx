@@ -24,18 +24,20 @@ export default async function AdminHomepagePage() {
   }
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-6 sm:space-y-8">
       <header>
         <h1 className="font-serif text-3xl tracking-tight">Homepage</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Curate the featured carousel and new-arrivals grid — pick products, copy, and
           links. Empty product lists auto-fill from the catalog.
         </p>
       </header>
 
-      {sections.map((section) => (
-        <HomepageSectionForm key={section.id} section={section} products={products} />
-      ))}
+      <div className="space-y-6">
+        {sections.map((section) => (
+          <HomepageSectionForm key={section.id} section={section} products={products} />
+        ))}
+      </div>
     </div>
   );
 }
