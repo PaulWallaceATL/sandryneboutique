@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
+import { BlogMarkdown } from "@/components/blog/blog-markdown";
 import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getPostBySlug, getPostProducts } from "@/lib/data/posts";
+import { getProducts } from "@/lib/data/products";
 import { blogPostingJsonLd, breadcrumbJsonLd } from "@/lib/seo/jsonld";
 
 interface PageProps {
@@ -56,6 +57,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   if (!post) notFound();
 
   const products = await getPostProducts(post.id);
+  const catalog = await getProducts();
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-16">
@@ -123,42 +125,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         )}
 
         <div className="text-[15px] leading-[1.85] text-foreground/85">
-          <ReactMarkdown
-            components={{
-              h2: ({ children }) => (
-                <h2 className="font-serif text-3xl tracking-tight mt-12 mb-4 text-foreground">
-                  {children}
-                </h2>
-              ),
-              h3: ({ children }) => (
-                <h3 className="font-serif text-2xl tracking-tight mt-10 mb-3 text-foreground">
-                  {children}
-                </h3>
-              ),
-              p: ({ children }) => <p className="mb-5">{children}</p>,
-              ul: ({ children }) => (
-                <ul className="list-disc pl-6 mb-5 flex flex-col gap-1.5">{children}</ul>
-              ),
-              ol: ({ children }) => (
-                <ol className="list-decimal pl-6 mb-5 flex flex-col gap-1.5">{children}</ol>
-              ),
-              a: ({ href, children }) => (
-                <Link
-                  href={href ?? "#"}
-                  className="underline underline-offset-4 hover:opacity-60 transition-opacity"
-                >
-                  {children}
-                </Link>
-              ),
-              blockquote: ({ children }) => (
-                <blockquote className="border-l-2 border-foreground/20 pl-5 italic my-6">
-                  {children}
-                </blockquote>
-              ),
-            }}
-          >
-            {post.content}
-          </ReactMarkdown>
+          <BlogMarkdown content={post.content} products={catalog} />
         </div>
       </article>
 

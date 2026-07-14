@@ -1,18 +1,172 @@
-import type { Post } from "@/lib/types";
+-- ============================================================================
+-- Journal schema (if missing) + SEO high-impact articles
+-- Safe to run in the Supabase SQL editor even when 003_blog.sql was never applied.
+-- Requires: 001_init.sql (private.is_admin) and public.products (002_seed or equivalent).
+-- ============================================================================
 
-/**
- * Local mirror of journal posts (after 004_journal_replace.sql).
- * Served when Supabase env vars are not configured yet, matching the
- * fallback-catalog.ts pattern for products.
- */
-export const FALLBACK_POSTS: Post[] = [
-  {
-    id: "1b5e2d2f-4a7e-4f7b-8c2b-000000000001",
-    title: "Summer Capsule Wardrobe: 10 Minimalist Pieces for Effortless Style",
-    slug: "summer-capsule-wardrobe-10-pieces",
-    excerpt:
-      "Build a refined summer wardrobe with ten intentional pieces — and discover how The Solstice Midi Dress, Linen Column Dress, and High-Rise Wide Leg Trouser work harder than a closet full of trends.",
-    content: `A summer wardrobe should feel like an exhale. Not fewer clothes for the sake of less — but a quieter edit of shapes that move with heat, light, and the invitations your calendar actually holds.
+do $$
+begin
+  if to_regclass('public.products') is null then
+    raise exception
+      'public.products does not exist. Run 001_init.sql and 002_seed.sql before this migration.';
+  end if;
+  if not exists (
+    select 1
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'private' and p.proname = 'is_admin'
+  ) then
+    raise exception
+      'private.is_admin() does not exist. Run 001_init.sql before this migration.';
+  end if;
+end $$;
+
+-- ----------------------------------------------------------------------------
+-- POSTS (idempotent bootstrap)
+-- ----------------------------------------------------------------------------
+create table if not exists public.posts (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  slug text not null unique,
+  excerpt text not null default '',
+  content text not null default '',
+  cover_image text,
+  published boolean not null default false,
+  published_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists posts_published_idx
+  on public.posts (published, published_at desc);
+
+alter table public.posts enable row level security;
+
+do $$
+begin
+  create policy "Published posts are publicly readable"
+    on public.posts for select
+    using (published = true);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can view all posts"
+    on public.posts for select
+    using (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can insert posts"
+    on public.posts for insert
+    with check (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can update posts"
+    on public.posts for update
+    using (private.is_admin())
+    with check (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can delete posts"
+    on public.posts for delete
+    using (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+create or replace function private.touch_post_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+drop trigger if exists posts_touch_updated_at on public.posts;
+create trigger posts_touch_updated_at
+  before update on public.posts
+  for each row execute function private.touch_post_updated_at();
+
+-- ----------------------------------------------------------------------------
+-- POST_PRODUCTS (idempotent bootstrap)
+-- ----------------------------------------------------------------------------
+create table if not exists public.post_products (
+  post_id uuid not null references public.posts (id) on delete cascade,
+  product_id uuid not null references public.products (id) on delete cascade,
+  position integer not null default 0,
+  primary key (post_id, product_id)
+);
+
+create index if not exists post_products_product_id_idx
+  on public.post_products (product_id);
+
+alter table public.post_products enable row level security;
+
+do $$
+begin
+  create policy "Post products are publicly readable"
+    on public.post_products for select
+    using (true);
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can insert post products"
+    on public.post_products for insert
+    with check (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can update post products"
+    on public.post_products for update
+    using (private.is_admin())
+    with check (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  create policy "Admins can delete post products"
+    on public.post_products for delete
+    using (private.is_admin());
+exception when duplicate_object then null;
+end $$;
+
+-- ----------------------------------------------------------------------------
+-- Replace any prior journal seeds with the three SEO articles
+-- ----------------------------------------------------------------------------
+delete from public.posts
+where slug in (
+  'how-to-style-a-silk-slip-dress',
+  'capsule-wardrobe-edit',
+  'summer-26-trend-report',
+  'summer-capsule-wardrobe-10-pieces',
+  'how-to-style-a-silk-camisole',
+  'art-of-modern-minimalism'
+);
+
+insert into public.posts (title, slug, excerpt, content, cover_image, published, published_at)
+values
+  (
+    $title$Summer Capsule Wardrobe: 10 Minimalist Pieces for Effortless Style$title$,
+    'summer-capsule-wardrobe-10-pieces',
+    $excerpt$Build a refined summer wardrobe with ten intentional pieces — and discover how The Solstice Midi Dress, Linen Column Dress, and High-Rise Wide Leg Trouser work harder than a closet full of trends.$excerpt$,
+    $content$A summer wardrobe should feel like an exhale. Not fewer clothes for the sake of less — but a quieter edit of shapes that move with heat, light, and the invitations your calendar actually holds.
 
 At Sandryne, we believe elegance is a function of clarity. Ten pieces, worn with intention, will outlast thirty bought in haste. This is your summer capsule: minimalist, breathable, and endlessly rearrangeable.
 
@@ -77,21 +231,16 @@ Mix across fabric families — crepe against cotton, linen against silk — and 
 
 Edit your closet, then edit your cart. Begin with the three pieces that work hardest — The Solstice Midi Dress, Linen Column Dress, and High-Rise Wide Leg Trouser — and build outward only when a gap is real.
 
-[Explore the full collection →](/shop)`,
-    cover_image:
-      "https://images.unsplash.com/photo-1539008835657-9e8e9680c956?q=80&w=1600&auto=format&fit=crop",
-    published: true,
-    published_at: "2026-07-10T10:00:00Z",
-    created_at: "2026-07-10T10:00:00Z",
-    updated_at: "2026-07-10T10:00:00Z",
-  },
-  {
-    id: "1b5e2d2f-4a7e-4f7b-8c2b-000000000002",
-    title: "5 Ways to Style a Silk Camisole: Desk to Summer Gala",
-    slug: "how-to-style-a-silk-camisole",
-    excerpt:
-      "From the conference table to a summer evening invitation — five refined ways to wear The Essential Silk Camisole, finished with gold that earns its place.",
-    content: `The camisole is not a compromise piece. In the right silk, it is a wardrobe’s most fluent translator — of day into night, of structure into ease, of a full calendar into one considered silhouette.
+[Explore the full collection →](/shop)$content$,
+    'https://images.unsplash.com/photo-1539008835657-9e8e9680c956?q=80&w=1600&auto=format&fit=crop',
+    true,
+    timestamptz '2026-07-10T10:00:00Z'
+  ),
+  (
+    $title$5 Ways to Style a Silk Camisole: Desk to Summer Gala$title$,
+    'how-to-style-a-silk-camisole',
+    $excerpt$From the conference table to a summer evening invitation — five refined ways to wear The Essential Silk Camisole, finished with gold that earns its place.$excerpt$,
+    $content$The camisole is not a compromise piece. In the right silk, it is a wardrobe’s most fluent translator — of day into night, of structure into ease, of a full calendar into one considered silhouette.
 
 The Essential Silk Camisole was cut for that fluency: washable silk, a scooped neckline, fine straps that disappear under a blazer and catch light when they should. What follows are five ways to wear it from morning remit to summer gala — each one elevating the base, none of them overcomplicating it.
 
@@ -133,22 +282,16 @@ Apparel sets the silhouette. Jewelry sets the hour. When you invest in The Essen
 
 Start with the camisole. Add the chain when the day asks for more. Shop both below, then build the rest of the look from trousers and earrings that already live in your edit.
 
-[Shop The Essential Silk Camisole →](/products/essential-silk-camisole) · [Shop the Gold Vermeil Chain Necklace →](/products/gold-vermeil-chain-necklace)`,
-    cover_image:
-      "https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=1600&auto=format&fit=crop",
-    published: true,
-    published_at: "2026-07-12T10:00:00Z",
-    created_at: "2026-07-12T10:00:00Z",
-    updated_at: "2026-07-12T10:00:00Z",
-  },
-  {
-    id: "1b5e2d2f-4a7e-4f7b-8c2b-000000000003",
-    title:
-      "The Art of Modern Minimalism: Why Quality Over Quantity Matters in 2026",
-    slug: "art-of-modern-minimalism",
-    excerpt:
-      "Quiet luxury is not a trend cycle — it is a closet philosophy. Inside the Sandryne approach to curated simplicity, and why fewer, finer pieces are the only wardrobe that still makes sense in 2026.",
-    content: `Modern minimalism is often misunderstood as emptiness. At Sandryne, it is the opposite: a full life, lightly carried. Fewer pieces, chosen with a jeweler’s eye for cut and cloth — that is the closet that still feels generous in 2026.
+[Shop The Essential Silk Camisole →](/products/essential-silk-camisole) · [Shop the Gold Vermeil Chain Necklace →](/products/gold-vermeil-chain-necklace)$content$,
+    'https://images.unsplash.com/photo-1564257631407-4deb1f99d992?q=80&w=1600&auto=format&fit=crop',
+    true,
+    timestamptz '2026-07-12T10:00:00Z'
+  ),
+  (
+    $title$The Art of Modern Minimalism: Why Quality Over Quantity Matters in 2026$title$,
+    'art-of-modern-minimalism',
+    $excerpt$Quiet luxury is not a trend cycle — it is a closet philosophy. Inside the Sandryne approach to curated simplicity, and why fewer, finer pieces are the only wardrobe that still makes sense in 2026.$excerpt$,
+    $content$Modern minimalism is often misunderstood as emptiness. At Sandryne, it is the opposite: a full life, lightly carried. Fewer pieces, chosen with a jeweler’s eye for cut and cloth — that is the closet that still feels generous in 2026.
 
 We live in a decade of abundance that rarely feels abundant. Trends arrive weekly; returns clog the hallway; the morning becomes a negotiation with a wardrobe that does not know what it is for. Quality over quantity is not austerity. It is choosing a rhythm your life can keep.
 
@@ -188,35 +331,31 @@ If your wardrobe has grown loud, begin again with four pieces that speak softly 
 
 We are not asking you to own less as a moral exercise. We are asking you to own what you love — and to love what earns its place.
 
-[Shop the collection →](/shop)`,
-    cover_image:
-      "https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1600&auto=format&fit=crop",
-    published: true,
-    published_at: "2026-07-14T10:00:00Z",
-    created_at: "2026-07-14T10:00:00Z",
-    updated_at: "2026-07-14T10:00:00Z",
-  },
-];
+[Shop the collection →](/shop)$content$,
+    'https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=1600&auto=format&fit=crop',
+    true,
+    timestamptz '2026-07-14T10:00:00Z'
+  );
 
-/** post id -> tagged product ids (mirrors post_products seed, in position order) */
-export const FALLBACK_POST_PRODUCTS: Record<string, string[]> = {
-  "1b5e2d2f-4a7e-4f7b-8c2b-000000000001": [
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000001", // solstice-midi-dress
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000002", // linen-column-dress
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000008", // high-rise-wide-leg-trouser
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000006", // oversized-poplin-shirt
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000007", // ribbed-knit-tank
-  ],
-  "1b5e2d2f-4a7e-4f7b-8c2b-000000000002": [
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000005", // essential-silk-camisole
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000013", // gold-vermeil-chain-necklace
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000008", // high-rise-wide-leg-trouser
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000014", // sculptural-hoop-earrings
-  ],
-  "1b5e2d2f-4a7e-4f7b-8c2b-000000000003": [
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000001", // solstice-midi-dress
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000005", // essential-silk-camisole
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000008", // high-rise-wide-leg-trouser
-    "0a4f1c1e-3f6d-4e6a-9b1a-000000000013", // gold-vermeil-chain-necklace
-  ],
-};
+-- Tag products to posts ("Shop the Look")
+insert into public.post_products (post_id, product_id, position)
+select p.id, pr.id, tag.position
+from public.posts p
+join lateral (
+  values
+    ('summer-capsule-wardrobe-10-pieces', 'solstice-midi-dress', 0),
+    ('summer-capsule-wardrobe-10-pieces', 'linen-column-dress', 1),
+    ('summer-capsule-wardrobe-10-pieces', 'high-rise-wide-leg-trouser', 2),
+    ('summer-capsule-wardrobe-10-pieces', 'oversized-poplin-shirt', 3),
+    ('summer-capsule-wardrobe-10-pieces', 'ribbed-knit-tank', 4),
+    ('how-to-style-a-silk-camisole', 'essential-silk-camisole', 0),
+    ('how-to-style-a-silk-camisole', 'gold-vermeil-chain-necklace', 1),
+    ('how-to-style-a-silk-camisole', 'high-rise-wide-leg-trouser', 2),
+    ('how-to-style-a-silk-camisole', 'sculptural-hoop-earrings', 3),
+    ('art-of-modern-minimalism', 'solstice-midi-dress', 0),
+    ('art-of-modern-minimalism', 'essential-silk-camisole', 1),
+    ('art-of-modern-minimalism', 'high-rise-wide-leg-trouser', 2),
+    ('art-of-modern-minimalism', 'gold-vermeil-chain-necklace', 3)
+) as tag(post_slug, product_slug, position)
+  on tag.post_slug = p.slug
+join public.products pr on pr.slug = tag.product_slug;

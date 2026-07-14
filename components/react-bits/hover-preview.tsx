@@ -9,6 +9,7 @@ import {
   useTransform,
 } from "motion/react";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 export interface HoverTarget {
@@ -74,8 +75,13 @@ const HoverPreview = ({
 }: HoverPreviewProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const targetRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     targets.forEach((target) => {
@@ -286,64 +292,66 @@ const HoverPreview = ({
     return parts;
   };
 
-  return (
-    <div className={cn("relative", className)}>
-      {renderContent()}
+  const preview = (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{
+        opacity: isVisible ? 1 : 0,
+        scale: isVisible ? 1 : 0.85,
+      }}
+      transition={{
+        duration: isVisible ? enterSpeed : exitSpeed,
+        ease: isVisible ? "easeOut" : "easeIn",
+      }}
+      style={{
+        position: "fixed",
+        left: 0,
+        top: 0,
+        x: finalX,
+        y: finalY,
+        width: imageWidth,
+        height: imageHeight,
+        rotate: smoothRotation,
+        pointerEvents: "none",
+        zIndex: 9999,
+        willChange: "transform, opacity",
+      }}
+    >
+      <AnimatePresence mode="popLayout" initial={false}>
+        {hoveredIndex !== null && targets[hoveredIndex] && (
+          <motion.div
+            key={`image-${hoveredIndex}`}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="absolute top-0 left-0 w-full h-full"
+          >
+            <NextImage
+              src={targets[hoveredIndex].imageUrl}
+              alt={
+                targets[hoveredIndex].altText || targets[hoveredIndex].text
+              }
+              width={imageWidth}
+              height={imageHeight}
+              className={cn("object-cover", showImageShadow && "shadow-2xl")}
+              style={{
+                borderRadius: imageBorderRadius,
+                width: imageWidth,
+                height: imageHeight,
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
 
-      {/* Image preview portal - single persistent container */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85 }}
-        animate={{
-          opacity: isVisible ? 1 : 0,
-          scale: isVisible ? 1 : 0.85,
-        }}
-        transition={{
-          duration: isVisible ? enterSpeed : exitSpeed,
-          ease: isVisible ? "easeOut" : "easeIn",
-        }}
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          x: finalX,
-          y: finalY,
-          width: imageWidth,
-          height: imageHeight,
-          rotate: smoothRotation,
-          pointerEvents: "none",
-          zIndex: 9999,
-          willChange: "transform, opacity",
-        }}
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          {hoveredIndex !== null && targets[hoveredIndex] && (
-            <motion.div
-              key={`image-${hoveredIndex}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
-              className="absolute top-0 left-0 w-full h-full"
-            >
-              <NextImage
-                src={targets[hoveredIndex].imageUrl}
-                alt={
-                  targets[hoveredIndex].altText || targets[hoveredIndex].text
-                }
-                width={imageWidth}
-                height={imageHeight}
-                className={cn("object-cover", showImageShadow && "shadow-2xl")}
-                style={{
-                  borderRadius: imageBorderRadius,
-                  width: imageWidth,
-                  height: imageHeight,
-                }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
+  return (
+    <span className={cn("relative", className)}>
+      {renderContent()}
+      {mounted ? createPortal(preview, document.body) : null}
+    </span>
   );
 };
 
