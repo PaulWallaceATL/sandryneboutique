@@ -1,0 +1,80 @@
+import { createClient } from "@/lib/supabase/server";
+import { getProducts, getProductsByIds, supabaseConfigured } from "@/lib/data/products";
+import type { HomepageSection, Product } from "@/lib/types";
+
+const DEFAULT_SECTIONS: HomepageSection[] = [
+  {
+    id: "featured_carousel",
+    label: "Featured carousel",
+    title: "Fresh Summer Picks",
+    subtitle: "This Week's",
+    cta_label: "View all new arrivals",
+    cta_href: "/shop?category=new-arrivals",
+    product_ids: [],
+    max_items: 8,
+    enabled: true,
+    sort_order: 10,
+    updated_at: new Date(0).toISOString(),
+  },
+  {
+    id: "new_arrivals",
+    label: "New arrivals grid",
+    title: "New Arrivals",
+    subtitle: "Just In",
+    cta_label: "Explore all",
+    cta_href: "/shop?category=new-arrivals",
+    product_ids: [],
+    max_items: 8,
+    enabled: true,
+    sort_order: 20,
+    updated_at: new Date(0).toISOString(),
+  },
+];
+
+export async function getHomepageSections(): Promise<HomepageSection[]> {
+  if (!supabaseConfigured()) return DEFAULT_SECTIONS;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("homepage_sections")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    // Table may not exist yet before migration 005 is applied.
+    console.error("Failed to fetch homepage sections:", error.message);
+    return DEFAULT_SECTIONS;
+  }
+
+  if (!data || data.length === 0) return DEFAULT_SECTIONS;
+  return data as HomepageSection[];
+}
+
+export async function getHomepageSection(id: string): Promise<HomepageSection | null> {
+  const sections = await getHomepageSections();
+  return sections.find((s) => s.id === id) ?? null;
+}
+
+/**
+ * Resolve products for a section. When product_ids is empty, fall back to
+ * shoppable catalog defaults so the storefront never looks broken.
+ */
+export async function getSectionProducts(section: HomepageSection): Promise<Product[]> {
+  const limit = section.max_items;
+
+  if (section.product_ids.length > 0) {
+    const fetched = await getProductsByIds(section.product_ids);
+    const byId = new Map(fetched.map((p) => [p.id, p]));
+    return section.product_ids
+      .map((id) => byId.get(id))
+      .filter((p): p is Product => Boolean(p))
+      .filter((p) => p.inventory_count > 0 && p.images.length > 0)
+      .slice(0, limit);
+  }
+
+  if (section.id === "new_arrivals") {
+    return getProducts({ isNew: true, shoppableOnly: true, limit });
+  }
+
+  return getProducts({ sort: "newest", shoppableOnly: true, limit });
+}

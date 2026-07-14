@@ -17,7 +17,7 @@ export function organizationJsonLd() {
     "@id": `${siteUrl}/#organization`,
     name: SITE_NAME,
     url: siteUrl,
-    logo: `${siteUrl}/favicon.ico`,
+    logo: `${siteUrl}/icon-512.png`,
     sameAs: [SOCIAL_LINKS.instagram, SOCIAL_LINKS.tiktok],
     contactPoint: {
       "@type": "ContactPoint",

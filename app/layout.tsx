@@ -41,6 +41,13 @@ export const metadata: Metadata = {
   description:
     "A curated luxury fashion boutique. Timeless silhouettes, modern minimalism, effortless elegance — dresses, tops, bottoms, active wear, accessories and jewelry.",
   applicationName: "Sandryne Boutique",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   keywords: [
     "luxury fashion boutique",
     "women's designer clothing",

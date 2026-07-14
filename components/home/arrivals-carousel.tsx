@@ -12,9 +12,19 @@ import { cn } from "@/lib/utils";
 
 interface ArrivalsCarouselProps {
   products: Product[];
+  eyebrow?: string;
+  title?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
 }
 
-export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
+export function ArrivalsCarousel({
+  products,
+  eyebrow = "This Week's",
+  title = "Fresh Summer Picks",
+  ctaLabel = "View all new arrivals",
+  ctaHref = "/shop?category=new-arrivals",
+}: ArrivalsCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -95,19 +105,17 @@ export function ArrivalsCarousel({ products }: ArrivalsCarouselProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-10 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-4">
-            This Week&rsquo;s
+            {eyebrow}
           </p>
           <h2 className="font-serif text-4xl sm:text-5xl tracking-tight">
-            <RevealText>
-              Fresh <em className="italic font-light">Summer</em> Picks
-            </RevealText>
+            <RevealText>{title}</RevealText>
           </h2>
         </div>
         <Link
-          href="/shop?category=new-arrivals"
+          href={ctaHref}
           className="group flex items-center gap-2 text-[11px] tracking-[0.22em] uppercase hover:opacity-60 transition-opacity"
         >
-          View all new arrivals
+          {ctaLabel}
           <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
         </Link>
       </div>

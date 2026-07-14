@@ -8,7 +8,10 @@ import { CategoryShowcase } from "@/components/home/category-showcase";
 import { ProductCard } from "@/components/product/product-card";
 import RevealText from "@/components/react-bits/reveal-text";
 import { LazySection } from "@/components/ui/lazy-section";
-import { getProducts } from "@/lib/data/products";
+import {
+  getHomepageSections,
+  getSectionProducts,
+} from "@/lib/data/homepage";
 
 const ArrivalsCarousel = dynamic(
   () =>
@@ -56,9 +59,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [newArrivals, freshPicks] = await Promise.all([
-    getProducts({ isNew: true, limit: 8 }),
-    getProducts({ sort: "newest", limit: 8 }),
+  const sections = await getHomepageSections();
+  const carousel = sections.find((s) => s.id === "featured_carousel");
+  const arrivals = sections.find((s) => s.id === "new_arrivals");
+
+  const [carouselProducts, arrivalProducts] = await Promise.all([
+    carousel?.enabled ? getSectionProducts(carousel) : Promise.resolve([]),
+    arrivals?.enabled ? getSectionProducts(arrivals) : Promise.resolve([]),
   ]);
 
   return (
@@ -67,37 +74,45 @@ export default async function HomePage() {
       <TaglineMarquee />
       <CategoryShowcase />
 
-      <LazySection minHeight="540px" rootMargin="80px" className="below-fold-section">
-        <ArrivalsCarousel products={freshPicks} />
-      </LazySection>
+      {carousel?.enabled && carouselProducts.length > 0 && (
+        <LazySection minHeight="540px" rootMargin="80px" className="below-fold-section">
+          <ArrivalsCarousel
+            products={carouselProducts}
+            eyebrow={carousel.subtitle}
+            title={carousel.title}
+            ctaLabel={carousel.cta_label}
+            ctaHref={carousel.cta_href}
+          />
+        </LazySection>
+      )}
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
-        <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-4">
-              Just In
-            </p>
-            <h2 className="font-serif text-4xl sm:text-5xl tracking-tight">
-              <RevealText>
-                New <em className="italic font-light">Arrivals</em>
-              </RevealText>
-            </h2>
+      {arrivals?.enabled && arrivalProducts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 py-20 sm:py-28">
+          <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] tracking-[0.24em] uppercase text-muted-foreground mb-4">
+                {arrivals.subtitle}
+              </p>
+              <h2 className="font-serif text-4xl sm:text-5xl tracking-tight">
+                <RevealText>{arrivals.title}</RevealText>
+              </h2>
+            </div>
+            <Link
+              href={arrivals.cta_href}
+              className="group flex items-center gap-2 text-[11px] tracking-[0.22em] uppercase hover:opacity-60 transition-opacity"
+            >
+              {arrivals.cta_label}
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
+            </Link>
           </div>
-          <Link
-            href="/shop?category=new-arrivals"
-            className="group flex items-center gap-2 text-[11px] tracking-[0.22em] uppercase hover:opacity-60 transition-opacity"
-          >
-            Explore all
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-10 sm:gap-x-6">
+            {arrivalProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <LazySection minHeight="480px" rootMargin="80px">
         <BrandSection />

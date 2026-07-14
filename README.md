@@ -33,6 +33,9 @@ admin panel require the environment variables below.
 2. Open **SQL Editor** and run, in order:
    - [`supabase/migrations/001_init.sql`](supabase/migrations/001_init.sql) — tables, RLS policies, auth trigger, inventory RPC, `product-images` storage bucket.
    - [`supabase/migrations/002_seed.sql`](supabase/migrations/002_seed.sql) — optional sample catalog.
+   - [`supabase/migrations/003_blog.sql`](supabase/migrations/003_blog.sql) — journal posts.
+   - [`supabase/migrations/004_journal_replace.sql`](supabase/migrations/004_journal_replace.sql) — journal seed content.
+   - [`supabase/migrations/005_homepage_sections.sql`](supabase/migrations/005_homepage_sections.sql) — admin-curated homepage product sections.
 3. Copy the project URL, anon key, and service role key into `.env.local`.
 4. Sign up through the site (`/login`), then promote yourself to admin:
 

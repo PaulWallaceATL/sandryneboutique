@@ -270,6 +270,70 @@ export async function deletePost(id: string): Promise<ActionResult> {
   return { ok: true, message: "Post deleted." };
 }
 
+export interface HomepageSectionInput {
+  title: string;
+  subtitle: string;
+  cta_label: string;
+  cta_href: string;
+  product_ids: string[];
+  max_items: number;
+  enabled: boolean;
+}
+
+function validateHomepageSection(input: HomepageSectionInput): string | null {
+  if (!input.title?.trim()) return "Section title is required.";
+  if (!input.cta_label?.trim()) return "CTA label is required.";
+  if (!input.cta_href?.trim() || !input.cta_href.startsWith("/")) {
+    return "CTA link must be a site path starting with / (e.g. /shop?category=tops).";
+  }
+  if (!Number.isInteger(input.max_items) || input.max_items < 1 || input.max_items > 24) {
+    return "Max products must be between 1 and 24.";
+  }
+  if (input.product_ids.length > input.max_items) {
+    return `Select at most ${input.max_items} products for this section.`;
+  }
+  return null;
+}
+
+export async function updateHomepageSection(
+  id: string,
+  input: HomepageSectionInput
+): Promise<ActionResult> {
+  const denied = await requireAdmin();
+  if (denied) return denied;
+
+  const invalid = validateHomepageSection(input);
+  if (invalid) return { ok: false, message: invalid };
+
+  const supabase = await createPrivilegedClient();
+  const { error } = await supabase
+    .from("homepage_sections")
+    .update({
+      title: input.title.trim(),
+      subtitle: input.subtitle.trim(),
+      cta_label: input.cta_label.trim(),
+      cta_href: input.cta_href.trim(),
+      product_ids: input.product_ids,
+      max_items: input.max_items,
+      enabled: input.enabled,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Homepage section update failed:", error);
+    return {
+      ok: false,
+      message:
+        "Failed to save section. Confirm migration 005_homepage_sections.sql was run in Supabase.",
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/homepage");
+  return { ok: true, message: "Homepage section saved." };
+}
+
 const ORDER_STATUSES: OrderStatus[] = ["pending", "paid", "shipped", "cancelled"];
 
 export async function updateOrderStatus(

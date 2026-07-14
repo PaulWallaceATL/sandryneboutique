@@ -38,6 +38,21 @@ export interface Post {
   updated_at: string;
 }
 
+/** Curated home page product rail (admin-managed). */
+export interface HomepageSection {
+  id: string;
+  label: string;
+  title: string;
+  subtitle: string;
+  cta_label: string;
+  cta_href: string;
+  product_ids: string[];
+  max_items: number;
+  enabled: boolean;
+  sort_order: number;
+  updated_at: string;
+}
+
 export type OrderStatus = "pending" | "paid" | "shipped" | "cancelled";
 
 export interface OrderItem {
