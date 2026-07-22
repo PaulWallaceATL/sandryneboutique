@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   DollarSign,
@@ -92,6 +93,13 @@ export default async function AdminDashboardPage() {
   ];
 
   const shortcuts = [
+    {
+      href: "/admin/integrations",
+      label: "Integrations health",
+      value: "Check",
+      hint: "Env vars + Heartland connectivity",
+      icon: Activity,
+    },
     {
       href: "/admin/orders?status=pending",
       label: "Pending orders",

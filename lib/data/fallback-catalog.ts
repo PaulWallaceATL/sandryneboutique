@@ -24,6 +24,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-07-01T10:00:00Z",
   },
   {
@@ -44,6 +46,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-30T10:00:00Z",
   },
   {
@@ -64,6 +68,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: true,
     sale_price: 139,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-10T10:00:00Z",
   },
   {
@@ -84,6 +90,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-05T10:00:00Z",
   },
   {
@@ -104,6 +112,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-07-02T10:00:00Z",
   },
   {
@@ -124,6 +134,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-28T10:00:00Z",
   },
   {
@@ -144,6 +156,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: true,
     sale_price: 39,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-05-20T10:00:00Z",
   },
   {
@@ -164,6 +178,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-29T10:00:00Z",
   },
   {
@@ -184,6 +200,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-05-15T10:00:00Z",
   },
   {
@@ -204,6 +222,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: true,
     sale_price: 68,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-05-10T10:00:00Z",
   },
   {
@@ -224,6 +244,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-27T10:00:00Z",
   },
   {
@@ -244,6 +266,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-05-25T10:00:00Z",
   },
   {
@@ -264,6 +288,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-07-03T10:00:00Z",
   },
   {
@@ -284,6 +310,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: true,
     sale_price: 59,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-05-05T10:00:00Z",
   },
   {
@@ -304,6 +332,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: false,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-04-20T10:00:00Z",
   },
   {
@@ -324,6 +354,8 @@ export const FALLBACK_PRODUCTS: Product[] = [
     is_new: true,
     on_sale: false,
     sale_price: null,
+    heartland_item_id: null,
+    heartland_public_id: null,
     created_at: "2026-06-26T10:00:00Z",
   },
 ];

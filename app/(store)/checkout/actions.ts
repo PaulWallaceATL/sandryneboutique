@@ -4,6 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/data/products";
 import { chargeCard, heartlandConfigured } from "@/lib/heartland";
+import {
+  heartlandRetailConfigured,
+  syncPaidOrderToRetail,
+} from "@/lib/heartland-retail";
 import { FLAT_SHIPPING_RATE, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { discountAmount, findDiscount } from "@/lib/discounts";
 import type { OrderItem, Product, ShippingAddress } from "@/lib/types";
@@ -86,6 +90,12 @@ export async function processCheckout(input: CheckoutInput): Promise<CheckoutRes
     if (!product) {
       return { ok: false, error: "An item in your cart is no longer available." };
     }
+    if (heartlandRetailConfigured() && product.heartland_item_id == null) {
+      return {
+        ok: false,
+        error: `"${product.name}" is not linked to Heartland Retail inventory and cannot be purchased online.`,
+      };
+    }
     if (product.inventory_count < line.quantity) {
       return {
         ok: false,
@@ -147,6 +157,7 @@ export async function processCheckout(input: CheckoutInput): Promise<CheckoutRes
       total_amount: total,
       status: "paid",
       heartland_transaction_id: charge.transactionId,
+      heartland_sync_status: heartlandRetailConfigured() ? "pending" : null,
       shipping_address: input.shipping,
       items: orderItems,
     })
@@ -173,6 +184,53 @@ export async function processCheckout(input: CheckoutInput): Promise<CheckoutRes
     });
     if (invError) {
       console.error(`Inventory decrement failed for ${item.product_id}:`, invError);
+    }
+  }
+
+  if (heartlandRetailConfigured()) {
+    try {
+      const retailLines = orderItems.map((item) => {
+        const product = products.get(item.product_id)!;
+        return {
+          heartlandItemId: product.heartland_item_id!,
+          quantity: item.quantity,
+          unitPrice: item.price,
+        };
+      });
+
+      const retail = await syncPaidOrderToRetail({
+        email: input.shipping.email,
+        fullName: input.shipping.full_name,
+        shipping: {
+          line1: input.shipping.line1,
+          line2: input.shipping.line2,
+          city: input.shipping.city,
+          state: input.shipping.state,
+          postal_code: input.shipping.postal_code,
+          country: input.shipping.country,
+        },
+        lines: retailLines,
+        shippingCharge: shippingCost,
+        totalAmount: total,
+        porticoTransactionId: charge.transactionId,
+      });
+
+      await admin
+        .from("orders")
+        .update({
+          heartland_sales_order_id: retail.salesOrderId,
+          heartland_sync_status: "synced",
+        })
+        .eq("id", order.id);
+    } catch (err) {
+      console.error(
+        `CRITICAL: order ${order.id} paid (${charge.transactionId}) but Heartland Retail sync failed:`,
+        err
+      );
+      await admin
+        .from("orders")
+        .update({ heartland_sync_status: "failed" })
+        .eq("id", order.id);
     }
   }
 

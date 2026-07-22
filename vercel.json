@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/sync-heartland-inventory",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

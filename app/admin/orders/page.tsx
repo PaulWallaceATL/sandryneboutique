@@ -168,6 +168,19 @@ export default async function AdminOrdersPage({
                     </div>
                     <div>
                       <h3 className="text-[11px] tracking-[0.18em] uppercase text-muted-foreground mb-2">
+                        Retail Sales Order
+                      </h3>
+                      <p className="text-xs font-mono break-all">
+                        {order.heartland_sales_order_id != null
+                          ? String(order.heartland_sales_order_id)
+                          : "—"}
+                        {order.heartland_sync_status
+                          ? ` (${order.heartland_sync_status})`
+                          : ""}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-[11px] tracking-[0.18em] uppercase text-muted-foreground mb-2">
                         Order Ref
                       </h3>
                       <p className="text-xs font-mono break-all">{order.id}</p>

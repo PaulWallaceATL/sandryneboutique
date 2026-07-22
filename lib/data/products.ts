@@ -42,9 +42,16 @@ export function supabaseConfigured(): boolean {
   );
 }
 
-/** Customer-facing catalog rule: must have photo(s) and stock. */
+/** Customer-facing catalog rule: photo(s), stock, and Retail link when Retail is configured. */
 export function isShoppable(product: Product): boolean {
-  return product.inventory_count > 0 && product.images.length > 0;
+  if (product.inventory_count <= 0 || product.images.length === 0) return false;
+  const retailOn = Boolean(
+    process.env.HEARTLAND_RETAIL_SUBDOMAIN &&
+      process.env.HEARTLAND_RETAIL_API_TOKEN &&
+      Number(process.env.HEARTLAND_RETAIL_STATION_ID) > 0
+  );
+  if (retailOn && product.heartland_item_id == null) return false;
+  return true;
 }
 
 function resolveCollectionFlags(q: ProductQuery): ProductQuery {

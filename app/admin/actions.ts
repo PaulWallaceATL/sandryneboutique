@@ -32,6 +32,8 @@ export interface ProductInput {
   is_new: boolean;
   on_sale: boolean;
   sale_price: number | null;
+  heartland_item_id: number | null;
+  heartland_public_id: string | null;
 }
 
 async function requireAdmin(): Promise<ActionResult | null> {
@@ -58,6 +60,12 @@ function validateProduct(input: ProductInput): string | null {
     return "Sale price is required when the product is on sale.";
   }
   if (input.images.length === 0) return "Add at least one product image.";
+  if (
+    input.heartland_item_id != null &&
+    (!Number.isInteger(input.heartland_item_id) || input.heartland_item_id <= 0)
+  ) {
+    return "Heartland item ID must be a positive whole number.";
+  }
   return null;
 }
 
@@ -80,7 +88,12 @@ export async function createProduct(input: ProductInput): Promise<ActionResult> 
     .single();
 
   if (error) {
-    if (error.code === "23505") return { ok: false, message: "That slug is already in use." };
+    if (error.code === "23505") {
+      if (error.message?.includes("heartland_item_id")) {
+        return { ok: false, message: "That Heartland item ID is already linked to another product." };
+      }
+      return { ok: false, message: "That slug is already in use." };
+    }
     console.error("Product create failed:", error);
     return { ok: false, message: "Failed to create product. Please try again." };
   }
@@ -103,7 +116,12 @@ export async function updateProduct(id: string, input: ProductInput): Promise<Ac
     .eq("id", id);
 
   if (error) {
-    if (error.code === "23505") return { ok: false, message: "That slug is already in use." };
+    if (error.code === "23505") {
+      if (error.message?.includes("heartland_item_id")) {
+        return { ok: false, message: "That Heartland item ID is already linked to another product." };
+      }
+      return { ok: false, message: "That slug is already in use." };
+    }
     console.error("Product update failed:", error);
     return { ok: false, message: "Failed to update product. Please try again." };
   }
@@ -377,4 +395,76 @@ export async function updateOrderStatus(
 
   revalidatePath("/admin/orders");
   return { ok: true, message: "Order updated." };
+}
+
+export interface HeartlandItemLookup {
+  heartland_item_id: number;
+  heartland_public_id: string | null;
+  name: string;
+  description: string;
+  price: number;
+  inventory_count: number;
+  active: boolean;
+}
+
+export type HeartlandLookupResult =
+  | { ok: true; item: HeartlandItemLookup }
+  | { ok: false; message: string };
+
+/** Look up a Heartland Retail item by internal id (or Item # / public_id). */
+export async function lookupHeartlandItem(rawId: string): Promise<HeartlandLookupResult> {
+  const denied = await requireAdmin();
+  if (denied) return { ok: false, message: denied.message };
+
+  const { getItem, getItemQtyAvailable, searchItemsByPublicId } = await import(
+    "@/lib/heartland-retail"
+  );
+
+  const trimmed = rawId.trim();
+  if (!trimmed) return { ok: false, message: "Enter a Heartland item ID or Item #." };
+
+  try {
+    let item;
+    if (/^\d+$/.test(trimmed)) {
+      item = await getItem(Number(trimmed));
+    } else {
+      const matches = await searchItemsByPublicId(trimmed);
+      if (matches.length === 0) {
+        return { ok: false, message: `No Heartland item found for “${trimmed}”.` };
+      }
+      item = matches[0];
+    }
+
+    let inventory_count = 0;
+    try {
+      inventory_count = await getItemQtyAvailable(item.id);
+    } catch (err) {
+      console.warn("Retail inventory lookup during item fetch:", err);
+    }
+
+    const name = (item.description || "").trim() || `Item ${item.id}`;
+    const description = (item.long_description || item.description || "").trim();
+
+    return {
+      ok: true,
+      item: {
+        heartland_item_id: item.id,
+        heartland_public_id: item.public_id ?? null,
+        name,
+        description,
+        price: Number(item.price) || 0,
+        inventory_count,
+        active: item.active !== false,
+      },
+    };
+  } catch (err) {
+    console.error("Heartland item lookup failed:", err);
+    return {
+      ok: false,
+      message:
+        err instanceof Error
+          ? err.message
+          : "Could not look up that Heartland item. Check your Retail credentials.",
+    };
+  }
 }

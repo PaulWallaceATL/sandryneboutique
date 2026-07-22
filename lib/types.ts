@@ -8,6 +8,8 @@ export interface Profile {
   created_at: string;
 }
 
+export type HeartlandSyncStatus = "pending" | "synced" | "failed";
+
 export interface Product {
   id: string;
   name: string;
@@ -22,6 +24,10 @@ export interface Product {
   is_new: boolean;
   on_sale: boolean;
   sale_price: number | null;
+  /** Heartland Retail internal item id — required to sell online. */
+  heartland_item_id: number | null;
+  /** Heartland Retail Item # (matches Shopify SKU). */
+  heartland_public_id: string | null;
   created_at: string;
 }
 
@@ -85,6 +91,8 @@ export interface Order {
   total_amount: number;
   status: OrderStatus;
   heartland_transaction_id: string | null;
+  heartland_sales_order_id: number | null;
+  heartland_sync_status: HeartlandSyncStatus | null;
   shipping_address: ShippingAddress;
   items: OrderItem[];
   created_at: string;
